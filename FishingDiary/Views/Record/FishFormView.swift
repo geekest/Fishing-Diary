@@ -122,7 +122,7 @@ struct FishFormView: View {
                 TextField("大口黑鲈", text: currentForm.speciesName)
                     .focused($focusedField, equals: .species)
                 Spacer()
-                Text("改 ›").font(.caption).foregroundStyle(.accentColor)
+                Text("改 ›").font(.caption).foregroundStyle(Color.accentColor)
             }
             .padding(.horizontal)
             .padding(.vertical, 14)
