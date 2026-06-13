@@ -29,6 +29,12 @@
 		E7CC8CA0F3CC8B7ECAEA5A3F /* PreviewExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A25EB009CBDD38A36B723B4 /* PreviewExportView.swift */; };
 		F0AF4AB708D26FA800921EBE /* DiaryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69FF9A5AE9FD9F4DC5522905 /* DiaryListView.swift */; };
 		F84768B54C383C877D9FAC49 /* WeatherSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA1686CDCB5523B6E6A79E03 /* WeatherSnapshot.swift */; };
+		AA11223344556677889900AA /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00112233445566778899AA /* Theme.swift */; };
+		BB11223344556677889900BB /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00112233445566778899BB /* Components.swift */; };
+		CC11223344556677889900CC /* CatchCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC00112233445566778899CC /* CatchCard.swift */; };
+		DD11223344556677889900DD /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00112233445566778899DD /* OnboardingView.swift */; };
+		EE11223344556677889900EE /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE00112233445566778899EE /* SessionDetailView.swift */; };
+		FF11223344556677889900FF /* SpeciesPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00112233445566778899FF /* SpeciesPickerSheet.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -56,6 +62,12 @@
 		EFE7265F0DE542B8290C31AC /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		F2CB67B0C8B0CB4DF30E8C46 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
 		FA3B910DB497C40957A373C0 /* FishCatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FishCatch.swift; sourceTree = "<group>"; };
+		AA00112233445566778899AA /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		BB00112233445566778899BB /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		CC00112233445566778899CC /* CatchCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatchCard.swift; sourceTree = "<group>"; };
+		DD00112233445566778899DD /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		EE00112233445566778899EE /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
+		FF00112233445566778899FF /* SpeciesPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeciesPickerSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,11 +86,20 @@
 			isa = PBXGroup;
 			children = (
 				218F0776902E6144EFB1293A /* Diary */,
+				BBBBCCDDEEFF001122334455 /* Onboarding */,
 				A45FB1E27810D160E99DD09D /* Profile */,
 				19F00E19B2DC6A211A9A3C13 /* Record */,
 				CA4BC204ADBBFE8E686EE062 /* Share */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		BBBBCCDDEEFF001122334455 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				DD00112233445566778899DD /* OnboardingView.swift */,
+			);
+			path = Onboarding;
 			sourceTree = "<group>";
 		};
 		19F00E19B2DC6A211A9A3C13 /* Record */ = {
@@ -89,6 +110,7 @@
 				1DD8F190708A4DF4DFB73028 /* EnvDataView.swift */,
 				1B9134171459010DDE787CB5 /* FishFormView.swift */,
 				189EE1AB77EEB077B8DCAAE9 /* SavedView.swift */,
+				FF00112233445566778899FF /* SpeciesPickerSheet.swift */,
 			);
 			path = Record;
 			sourceTree = "<group>";
@@ -97,6 +119,7 @@
 			isa = PBXGroup;
 			children = (
 				69FF9A5AE9FD9F4DC5522905 /* DiaryListView.swift */,
+				EE00112233445566778899EE /* SessionDetailView.swift */,
 			);
 			path = Diary;
 			sourceTree = "<group>";
@@ -184,10 +207,21 @@
 			path = Templates;
 			sourceTree = "<group>";
 		};
+		AABBCCDDEEFF001122334455 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				AA00112233445566778899AA /* Theme.swift */,
+				BB00112233445566778899BB /* Components.swift */,
+				CC00112233445566778899CC /* CatchCard.swift */,
+			);
+			path = Common;
+			sourceTree = "<group>";
+		};
 		F1ACA5879DE1DDE3BCC27F22 /* FishingDiary */ = {
 			isa = PBXGroup;
 			children = (
 				4B1E69DAFEE2DEE32932B662 /* App */,
+				AABBCCDDEEFF001122334455 /* Common */,
 				C68CC4F67E5014F0FCA3DF5E /* Models */,
 				647C2B2C8F14944452ABEA55 /* Resources */,
 				AE4FF93B917314FC6FB89780 /* Services */,
@@ -292,6 +326,12 @@
 				5262F34945115A8CB28C7167 /* ShareStyleView.swift in Sources */,
 				2C360C3DCDCE2CC15447E40C /* WeatherService.swift in Sources */,
 				F84768B54C383C877D9FAC49 /* WeatherSnapshot.swift in Sources */,
+				AA11223344556677889900AA /* Theme.swift in Sources */,
+				BB11223344556677889900BB /* Components.swift in Sources */,
+				CC11223344556677889900CC /* CatchCard.swift in Sources */,
+				DD11223344556677889900DD /* OnboardingView.swift in Sources */,
+				EE11223344556677889900EE /* SessionDetailView.swift in Sources */,
+				FF11223344556677889900FF /* SpeciesPickerSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-/// 保存成功界面：存入 SwiftData 并引导分享
+// MARK: - 保存成功界面
 struct SavedView: View {
     @Binding var isRecordPresented: Bool
     @EnvironmentObject var recordSession: RecordSession
@@ -11,123 +11,153 @@ struct SavedView: View {
     @State private var savedSession: FishingSession? = nil
     @State private var navigateToShare = false
     @State private var isSaving = true
+    @State private var badgeScale: CGFloat = 0.3
+    @State private var badgeOpacity: Double = 0
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                Spacer(minLength: 40)
+        ZStack {
+            Theme.Colors.bg.ignoresSafeArea()
 
-                // 大勾
-                ZStack {
-                    Circle()
-                        .fill(Color.accentColor.opacity(0.12))
-                        .frame(width: 88, height: 88)
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 40, weight: .bold))
-                        .foregroundStyle(Color.accentColor)
-                }
+            ScrollView {
+                VStack(spacing: Theme.Space.xxl) {
+                    Spacer(minLength: 40)
 
-                Text("已存入日记")
-                    .font(.title2)
-                    .fontWeight(.bold)
+                    // 大勾 badge
+                    ZStack {
+                        Circle()
+                            .fill(Theme.Colors.accentSoft)
+                            .frame(width: 96, height: 96)
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 42, weight: .bold))
+                            .foregroundStyle(Theme.Colors.accent)
+                    }
+                    .scaleEffect(badgeScale)
+                    .opacity(badgeOpacity)
 
-                Text("免费记录完成 — 要不要生成一张分享图？")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+                    // 标题区
+                    VStack(spacing: Theme.Space.sm) {
+                        Text("已存入日记")
+                            .font(Theme.Font.title)
+                            .foregroundStyle(Theme.Colors.ink)
 
-                // 卡片预览
-                if let session = savedSession {
-                    cardPreview(session: session)
-                } else if isSaving {
-                    ProgressView("保存中…")
-                        .frame(height: 200)
-                }
+                        Text("免费记录完成 · 要生成一张分享卡吗？")
+                            .font(Theme.Font.body)
+                            .foregroundStyle(Theme.Colors.ink2)
+                            .multilineTextAlignment(.center)
+                    }
 
-                // 操作按钮
-                VStack(spacing: 12) {
+                    // 分享卡预览
                     if let session = savedSession {
-                        Button {
-                            navigateToShare = true
-                        } label: {
-                            Label("生成分享图", systemImage: "sparkles")
-                                .fontWeight(.semibold)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 16)
-                                .background(Color.accentColor)
-                                .foregroundStyle(.white)
-                                .clipShape(RoundedRectangle(cornerRadius: 14))
-                        }
-                        .navigationDestination(isPresented: $navigateToShare) {
-                            ShareStyleView(session: session, isRecordPresented: $isRecordPresented)
-                        }
+                        shareCardPreview(session: session)
+                    } else if isSaving {
+                        RoundedRectangle(cornerRadius: Theme.Radius.card)
+                            .fill(Theme.Colors.bg2)
+                            .aspectRatio(3/4, contentMode: .fit)
+                            .frame(maxWidth: 220)
+                            .overlay {
+                                ProgressView().tint(Theme.Colors.accent)
+                            }
                     }
 
-                    Button("暂不，回日记") {
-                        recordSession.reset()
-                        isRecordPresented = false
+                    // 操作按钮
+                    VStack(spacing: Theme.Space.md) {
+                        if let session = savedSession {
+                            PrimaryButton(title: "✦  生成分享图") {
+                                navigateToShare = true
+                            }
+                            .navigationDestination(isPresented: $navigateToShare) {
+                                ShareStyleView(session: session, isRecordPresented: $isRecordPresented)
+                            }
+                        } else {
+                            PrimaryButton(title: "生成分享图", isLoading: true) {}
+                        }
+
+                        GhostButton(title: "暂不，回日记") {
+                            recordSession.reset()
+                            isRecordPresented = false
+                        }
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .padding(.horizontal, Theme.Space.lg)
+
+                    Spacer(minLength: 40)
                 }
-                .padding(.horizontal)
             }
         }
         .navigationTitle("保存完成")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        .task { await saveSession() }
+        .task {
+            await saveSession()
+            // 入场动画
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.65)) {
+                badgeScale = 1.0
+                badgeOpacity = 1.0
+            }
+        }
     }
 
-    // MARK: - 卡片预览（占位样式）
-    private func cardPreview(session: FishingSession) -> some View {
+    // MARK: - 分享卡预览
+    private func shareCardPreview(session: FishingSession) -> some View {
         ZStack(alignment: .bottomLeading) {
-            // 封面图或占位
+            // 封面图或渐变占位
             Group {
                 if let data = session.coverImageData, let img = UIImage(data: data) {
                     Image(uiImage: img)
                         .resizable()
                         .scaledToFill()
                 } else {
-                    Rectangle().fill(Color(.systemGray5))
+                    Theme.Colors.catchGradient(for: session.id)
                 }
             }
-            .frame(height: 220)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .frame(maxWidth: .infinity)
+            .clipped()
 
-            // 渐变蒙层
+            // 蒙层
             LinearGradient(
-                colors: [.clear, .black.opacity(0.6)],
+                colors: [.clear, .black.opacity(0.65)],
                 startPoint: .top,
                 endPoint: .bottom
             )
-            .clipShape(RoundedRectangle(cornerRadius: 16))
 
-            // 文字
+            // 卡片内容
             VStack(alignment: .leading, spacing: 4) {
-                Text("钓鱼日记 · \(session.date.formatted(.dateTime.month(.twoDigits).day(.twoDigits)))")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.8))
+                Text("钓鱼日记 · \(formattedDate(session.date))")
+                    .font(Theme.Font.microLabel)
+                    .foregroundStyle(.white.opacity(0.7))
+
                 if let first = session.catches.first {
-                    Text("\(first.lengthCm.map { "\(Int($0))" } ?? "—") cm")
-                        .font(.system(size: 34, weight: .bold))
-                        .foregroundStyle(.white)
+                    if let len = first.lengthCm {
+                        HStack(alignment: .lastTextBaseline, spacing: 3) {
+                            Text("\(Int(len))")
+                                .font(Theme.Font.data(34, weight: .medium))
+                                .foregroundStyle(.white)
+                            Text("cm")
+                                .font(Theme.Font.subhead)
+                                .foregroundStyle(.white.opacity(0.8))
+                        }
+                    }
                     Text("\(first.speciesName) · \(session.locationName)")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.8))
+                        .font(Theme.Font.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white.opacity(0.9))
                 }
             }
-            .padding(16)
+            .padding(Theme.Space.lg)
         }
-        .padding(.horizontal)
-        .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+        .aspectRatio(3/4, contentMode: .fit)
+        .frame(maxWidth: 220)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
+        .shadowCard()
+    }
+
+    private func formattedDate(_ date: Date) -> String {
+        let fmt = DateFormatter()
+        fmt.dateFormat = "MM.dd"
+        return fmt.string(from: date)
     }
 
     // MARK: - 写入 SwiftData
     private func saveSession() async {
-        // 构建 FishCatch 列表
         var catches: [FishCatch] = []
         let forms = recordSession.fishForms
         let images = recordSession.effectiveImages
@@ -148,11 +178,9 @@ struct SavedView: View {
             modelContext.insert(catch_)
         }
 
-        // 构建天气 Data
         var weatherData: Data? = nil
         if let w = recordSession.weather {
             let toggles = recordSession.weatherToggles
-            // 根据用户开关过滤存入的字段
             let filtered = WeatherSnapshot(
                 temperature: toggles.temperature ? w.temperature : 0,
                 windSpeed: toggles.wind ? w.windSpeed : 0,
