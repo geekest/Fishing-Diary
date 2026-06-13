@@ -13,6 +13,13 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
     DEVELOPMENT_TEAM: ""  # TODO: 填入你的 Team ID
     TARGETED_DEVICE_FAMILY: "1"  # iPhone only
+    # Xcode 推荐设置
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    DEAD_CODE_STRIPPING: YES
+    SWIFT_COMPILATION_MODE: wholemodule
+  configs:
+    debug:
+      SWIFT_COMPILATION_MODE: incremental
 
 targets:
   FishingDiary:
@@ -37,19 +44,20 @@ targets:
         NSPhotoLibraryUsageDescription: "从相册选择渔获照片"
         NSCameraUsageDescription: "拍摄渔获照片"
         NSPhotoLibraryAddUsageDescription: "将分享图保存到相册"
-    entitlements:
-      path: FishingDiary/Resources/FishingDiary.entitlements
-      properties:
-        com.apple.developer.weatherkit: true
-        com.apple.developer.icloud-container-identifiers:
-          - iCloud.com.placeholder.FishingDiary
-        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)com.placeholder.FishingDiary
-        com.apple.developer.icloud-services:
-          - CloudKit
+    # entitlements: 暂时移除 WeatherKit + CloudKit（已 Mock，无需付费签名即可跑模拟器）
+    # TODO: 准备上架时取消注释并填入真实 Team ID：
+    # entitlements:
+    #   path: FishingDiary/Resources/FishingDiary.entitlements
+    #   properties:
+    #     com.apple.developer.weatherkit: true
+    #     com.apple.developer.icloud-container-identifiers:
+    #       - iCloud.<your.bundle.id>
+    #     com.apple.developer.icloud-services:
+    #       - CloudKit
     settings:
       base:
         INFOPLIST_FILE: FishingDiary/Resources/Info.plist
-        CODE_SIGN_ENTITLEMENTS: FishingDiary/Resources/FishingDiary.entitlements
+        CODE_SIGN_STYLE: Automatic
     dependencies:
       - package: TOCropViewController
     swift_packages: []
