@@ -1,0 +1,504 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0E3AB27F32A6E77336C7BCBF /* FishCatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA3B910DB497C40957A373C0 /* FishCatch.swift */; };
+		12E2DAEE1AA7C560D27FF95B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4B00AF205091BFA890714C32 /* Assets.xcassets */; };
+		14BBBBB9DEE19264908FC847 /* PurchaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4B601C2D87F0C0B937A18E3 /* PurchaseService.swift */; };
+		17A59E61E876EB2E207B7BBD /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 00F0D961E4C474C07DD88374 /* TOCropViewController */; };
+		279B3B2B43CCEC32DCBCB0FE /* ImageRenderService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C013987E6E317AD66C67B0FC /* ImageRenderService.swift */; };
+		2C360C3DCDCE2CC15447E40C /* WeatherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D2D497781D3CB392542E4FC /* WeatherService.swift */; };
+		36CF23584B7DF5A18BBA972C /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFE7265F0DE542B8290C31AC /* ProfileView.swift */; };
+		4B66FB2B9B078126B63E6E9B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E215E76EF0CC6902FB34E73D /* ContentView.swift */; };
+		5262F34945115A8CB28C7167 /* ShareStyleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6A126B888B00DA90D65E6EC /* ShareStyleView.swift */; };
+		587138219B7EED88BF96DEB8 /* SavedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 189EE1AB77EEB077B8DCAAE9 /* SavedView.swift */; };
+		60F67593FEBA995EC8373510 /* MinimalCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D77054B3DAFFCEA35142FCB2 /* MinimalCardView.swift */; };
+		6E2F8371EF8C4AD5A08CDAC6 /* EnvDataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DD8F190708A4DF4DFB73028 /* EnvDataView.swift */; };
+		830251BCC9BC40199A68E437 /* RecordSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F6D1071151B99EA1A33955 /* RecordSession.swift */; };
+		AC500F8D35991EACEFF015C5 /* FishingDiaryApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56A8ADF9E995E1A2992272 /* FishingDiaryApp.swift */; };
+		AE4097A3DC6B812950B643A7 /* FishingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5340C3DD71872FF8BE1ACF39 /* FishingSession.swift */; };
+		B846D61DAC4AD72D9BF35B0C /* FishFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B9134171459010DDE787CB5 /* FishFormView.swift */; };
+		BF2B9653F22E6BB20E494752 /* ShareElementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A226933FB6B5E5DFCD5C8A4B /* ShareElementsView.swift */; };
+		C6FDB3B43A6862AF7B47A605 /* CutoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472FD41984CF4EC92685A0BA /* CutoutView.swift */; };
+		CF1E7D71ADD57514EC258618 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2CB67B0C8B0CB4DF30E8C46 /* CameraView.swift */; };
+		E7CC8CA0F3CC8B7ECAEA5A3F /* PreviewExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A25EB009CBDD38A36B723B4 /* PreviewExportView.swift */; };
+		F0AF4AB708D26FA800921EBE /* DiaryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69FF9A5AE9FD9F4DC5522905 /* DiaryListView.swift */; };
+		F84768B54C383C877D9FAC49 /* WeatherSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA1686CDCB5523B6E6A79E03 /* WeatherSnapshot.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		189EE1AB77EEB077B8DCAAE9 /* SavedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedView.swift; sourceTree = "<group>"; };
+		1B9134171459010DDE787CB5 /* FishFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FishFormView.swift; sourceTree = "<group>"; };
+		1DD8F190708A4DF4DFB73028 /* EnvDataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnvDataView.swift; sourceTree = "<group>"; };
+		3B88457C1283A6D1C43088A2 /* FishingDiary.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FishingDiary.entitlements; sourceTree = "<group>"; };
+		472FD41984CF4EC92685A0BA /* CutoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CutoutView.swift; sourceTree = "<group>"; };
+		4B00AF205091BFA890714C32 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		5340C3DD71872FF8BE1ACF39 /* FishingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FishingSession.swift; sourceTree = "<group>"; };
+		69FF9A5AE9FD9F4DC5522905 /* DiaryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryListView.swift; sourceTree = "<group>"; };
+		6A25EB009CBDD38A36B723B4 /* PreviewExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewExportView.swift; sourceTree = "<group>"; };
+		6D2D497781D3CB392542E4FC /* WeatherService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherService.swift; sourceTree = "<group>"; };
+		72779A0EB428410BE54F53BD /* FishingDiary.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FishingDiary.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1F6D1071151B99EA1A33955 /* RecordSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordSession.swift; sourceTree = "<group>"; };
+		A226933FB6B5E5DFCD5C8A4B /* ShareElementsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareElementsView.swift; sourceTree = "<group>"; };
+		B6A126B888B00DA90D65E6EC /* ShareStyleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareStyleView.swift; sourceTree = "<group>"; };
+		C013987E6E317AD66C67B0FC /* ImageRenderService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageRenderService.swift; sourceTree = "<group>"; };
+		C144EF83B989D9AB21A59343 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		CE56A8ADF9E995E1A2992272 /* FishingDiaryApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FishingDiaryApp.swift; sourceTree = "<group>"; };
+		D4B601C2D87F0C0B937A18E3 /* PurchaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseService.swift; sourceTree = "<group>"; };
+		D77054B3DAFFCEA35142FCB2 /* MinimalCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimalCardView.swift; sourceTree = "<group>"; };
+		E215E76EF0CC6902FB34E73D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		EA1686CDCB5523B6E6A79E03 /* WeatherSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherSnapshot.swift; sourceTree = "<group>"; };
+		EFE7265F0DE542B8290C31AC /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		F2CB67B0C8B0CB4DF30E8C46 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
+		FA3B910DB497C40957A373C0 /* FishCatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FishCatch.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		65FABB5B1E9E98B077953CD4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				17A59E61E876EB2E207B7BBD /* TOCropViewController in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		195BE340238D34D942A271A0 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				218F0776902E6144EFB1293A /* Diary */,
+				A45FB1E27810D160E99DD09D /* Profile */,
+				19F00E19B2DC6A211A9A3C13 /* Record */,
+				CA4BC204ADBBFE8E686EE062 /* Share */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		19F00E19B2DC6A211A9A3C13 /* Record */ = {
+			isa = PBXGroup;
+			children = (
+				F2CB67B0C8B0CB4DF30E8C46 /* CameraView.swift */,
+				472FD41984CF4EC92685A0BA /* CutoutView.swift */,
+				1DD8F190708A4DF4DFB73028 /* EnvDataView.swift */,
+				1B9134171459010DDE787CB5 /* FishFormView.swift */,
+				189EE1AB77EEB077B8DCAAE9 /* SavedView.swift */,
+			);
+			path = Record;
+			sourceTree = "<group>";
+		};
+		218F0776902E6144EFB1293A /* Diary */ = {
+			isa = PBXGroup;
+			children = (
+				69FF9A5AE9FD9F4DC5522905 /* DiaryListView.swift */,
+			);
+			path = Diary;
+			sourceTree = "<group>";
+		};
+		43CDADB5FD80EFEC1C1C9B55 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				72779A0EB428410BE54F53BD /* FishingDiary.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		4B1E69DAFEE2DEE32932B662 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				E215E76EF0CC6902FB34E73D /* ContentView.swift */,
+				CE56A8ADF9E995E1A2992272 /* FishingDiaryApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		647C2B2C8F14944452ABEA55 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				4B00AF205091BFA890714C32 /* Assets.xcassets */,
+				3B88457C1283A6D1C43088A2 /* FishingDiary.entitlements */,
+				C144EF83B989D9AB21A59343 /* Info.plist */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		A45FB1E27810D160E99DD09D /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				EFE7265F0DE542B8290C31AC /* ProfileView.swift */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		AE4FF93B917314FC6FB89780 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				C013987E6E317AD66C67B0FC /* ImageRenderService.swift */,
+				D4B601C2D87F0C0B937A18E3 /* PurchaseService.swift */,
+				6D2D497781D3CB392542E4FC /* WeatherService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		C68CC4F67E5014F0FCA3DF5E /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				FA3B910DB497C40957A373C0 /* FishCatch.swift */,
+				5340C3DD71872FF8BE1ACF39 /* FishingSession.swift */,
+				A1F6D1071151B99EA1A33955 /* RecordSession.swift */,
+				EA1686CDCB5523B6E6A79E03 /* WeatherSnapshot.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		C9846AE085BA06AFEE0AC726 = {
+			isa = PBXGroup;
+			children = (
+				F1ACA5879DE1DDE3BCC27F22 /* FishingDiary */,
+				43CDADB5FD80EFEC1C1C9B55 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		CA4BC204ADBBFE8E686EE062 /* Share */ = {
+			isa = PBXGroup;
+			children = (
+				6A25EB009CBDD38A36B723B4 /* PreviewExportView.swift */,
+				A226933FB6B5E5DFCD5C8A4B /* ShareElementsView.swift */,
+				B6A126B888B00DA90D65E6EC /* ShareStyleView.swift */,
+				E13EB4A861B6BF471155E18D /* Templates */,
+			);
+			path = Share;
+			sourceTree = "<group>";
+		};
+		E13EB4A861B6BF471155E18D /* Templates */ = {
+			isa = PBXGroup;
+			children = (
+				D77054B3DAFFCEA35142FCB2 /* MinimalCardView.swift */,
+			);
+			path = Templates;
+			sourceTree = "<group>";
+		};
+		F1ACA5879DE1DDE3BCC27F22 /* FishingDiary */ = {
+			isa = PBXGroup;
+			children = (
+				4B1E69DAFEE2DEE32932B662 /* App */,
+				C68CC4F67E5014F0FCA3DF5E /* Models */,
+				647C2B2C8F14944452ABEA55 /* Resources */,
+				AE4FF93B917314FC6FB89780 /* Services */,
+				195BE340238D34D942A271A0 /* Views */,
+			);
+			path = FishingDiary;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		D08C5CFA8CC3FAB6DF08BCAF /* FishingDiary */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4CF4E04BC290831A144D9AA7 /* Build configuration list for PBXNativeTarget "FishingDiary" */;
+			buildPhases = (
+				0FDA2D46462F644BBE64667D /* Sources */,
+				C76D38DA0746AD03F6F4448D /* Resources */,
+				65FABB5B1E9E98B077953CD4 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FishingDiary;
+			packageProductDependencies = (
+				00F0D961E4C474C07DD88374 /* TOCropViewController */,
+			);
+			productName = FishingDiary;
+			productReference = 72779A0EB428410BE54F53BD /* FishingDiary.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F6005A1D84A1834DD1919C5C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					D08C5CFA8CC3FAB6DF08BCAF = {
+						DevelopmentTeam = "";
+					};
+				};
+			};
+			buildConfigurationList = DD278AAC3D90C4F1CE71C9D6 /* Build configuration list for PBXProject "FishingDiary" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = C9846AE085BA06AFEE0AC726;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				6EE0381FB9E6193E32444D30 /* XCRemoteSwiftPackageReference "TOCropViewController" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 43CDADB5FD80EFEC1C1C9B55 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D08C5CFA8CC3FAB6DF08BCAF /* FishingDiary */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C76D38DA0746AD03F6F4448D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				12E2DAEE1AA7C560D27FF95B /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0FDA2D46462F644BBE64667D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CF1E7D71ADD57514EC258618 /* CameraView.swift in Sources */,
+				4B66FB2B9B078126B63E6E9B /* ContentView.swift in Sources */,
+				C6FDB3B43A6862AF7B47A605 /* CutoutView.swift in Sources */,
+				F0AF4AB708D26FA800921EBE /* DiaryListView.swift in Sources */,
+				6E2F8371EF8C4AD5A08CDAC6 /* EnvDataView.swift in Sources */,
+				0E3AB27F32A6E77336C7BCBF /* FishCatch.swift in Sources */,
+				B846D61DAC4AD72D9BF35B0C /* FishFormView.swift in Sources */,
+				AC500F8D35991EACEFF015C5 /* FishingDiaryApp.swift in Sources */,
+				AE4097A3DC6B812950B643A7 /* FishingSession.swift in Sources */,
+				279B3B2B43CCEC32DCBCB0FE /* ImageRenderService.swift in Sources */,
+				60F67593FEBA995EC8373510 /* MinimalCardView.swift in Sources */,
+				E7CC8CA0F3CC8B7ECAEA5A3F /* PreviewExportView.swift in Sources */,
+				36CF23584B7DF5A18BBA972C /* ProfileView.swift in Sources */,
+				14BBBBB9DEE19264908FC847 /* PurchaseService.swift in Sources */,
+				830251BCC9BC40199A68E437 /* RecordSession.swift in Sources */,
+				587138219B7EED88BF96DEB8 /* SavedView.swift in Sources */,
+				BF2B9653F22E6BB20E494752 /* ShareElementsView.swift in Sources */,
+				5262F34945115A8CB28C7167 /* ShareStyleView.swift in Sources */,
+				2C360C3DCDCE2CC15447E40C /* WeatherService.swift in Sources */,
+				F84768B54C383C877D9FAC49 /* WeatherSnapshot.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		17B93A369A26B8A872A51284 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = FishingDiary/Resources/FishingDiary.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = FishingDiary/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.placeholder.FishingDiary;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		43FE291EE61539A6B4FEBA37 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = FishingDiary/Resources/FishingDiary.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = FishingDiary/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.placeholder.FishingDiary;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		588ED4AB09E7C05D7DC96255 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		978B5582BAF31D0CF366266A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4CF4E04BC290831A144D9AA7 /* Build configuration list for PBXNativeTarget "FishingDiary" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				43FE291EE61539A6B4FEBA37 /* Debug */,
+				17B93A369A26B8A872A51284 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DD278AAC3D90C4F1CE71C9D6 /* Build configuration list for PBXProject "FishingDiary" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				588ED4AB09E7C05D7DC96255 /* Debug */,
+				978B5582BAF31D0CF366266A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		6EE0381FB9E6193E32444D30 /* XCRemoteSwiftPackageReference "TOCropViewController" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/TimOliver/TOCropViewController";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 2.7.4;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		00F0D961E4C474C07DD88374 /* TOCropViewController */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6EE0381FB9E6193E32444D30 /* XCRemoteSwiftPackageReference "TOCropViewController" */;
+			productName = TOCropViewController;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = F6005A1D84A1834DD1919C5C /* Project object */;
+}

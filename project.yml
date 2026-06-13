@@ -1,0 +1,60 @@
+name: FishingDiary
+options:
+  bundleIdPrefix: com.placeholder
+  deploymentTarget:
+    iOS: "16.0"
+  xcodeVersion: "15"
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: ""  # TODO: 填入你的 Team ID
+    TARGETED_DEVICE_FAMILY: "1"  # iPhone only
+
+targets:
+  FishingDiary:
+    type: application
+    platform: iOS
+    bundleId: com.placeholder.FishingDiary
+    sources:
+      - path: FishingDiary
+    resources:
+      - path: FishingDiary/Resources
+    info:
+      path: FishingDiary/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: "钓鱼日记"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UILaunchScreen:
+          UIColorName: AccentColor
+        NSLocationWhenInUseUsageDescription: "用于自动记录钓点位置和获取当地天气数据"
+        NSPhotoLibraryUsageDescription: "从相册选择渔获照片"
+        NSCameraUsageDescription: "拍摄渔获照片"
+        NSPhotoLibraryAddUsageDescription: "将分享图保存到相册"
+    entitlements:
+      path: FishingDiary/Resources/FishingDiary.entitlements
+      properties:
+        com.apple.developer.weatherkit: true
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.com.placeholder.FishingDiary
+        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)com.placeholder.FishingDiary
+        com.apple.developer.icloud-services:
+          - CloudKit
+    settings:
+      base:
+        INFOPLIST_FILE: FishingDiary/Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: FishingDiary/Resources/FishingDiary.entitlements
+    dependencies:
+      - package: TOCropViewController
+    swift_packages: []
+
+packages:
+  TOCropViewController:
+    url: https://github.com/TimOliver/TOCropViewController
+    minorVersion: "2.7.4"
