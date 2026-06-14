@@ -43,47 +43,42 @@ struct CatchCard: View {
 
     // MARK: - 照片区（16:9）
     private var photoArea: some View {
-        ZStack(alignment: .bottom) {
-            // 封面图 or 渐变占位
-            photoBackground
-                .aspectRatio(16/9, contentMode: .fill)
-                .clipped()
-
-            // 底部渐变蒙层
-            LinearGradient(
-                colors: [.clear, .black.opacity(0.55)],
-                startPoint: .center,
-                endPoint: .bottom
-            )
-
-            // 标签层
-            HStack(alignment: .bottom) {
-                // 左上日期 pill
-                VStack(alignment: .leading) {
-                    pillTag(dateText)
-                    Spacer()
-                }
-
-                Spacer()
-
-                // 右上钓法 pill
-                VStack(alignment: .trailing) {
-                    pillTag("路亚")
-                    Spacer()
-                    // 右下体长
-                    if !lengthText.isEmpty {
-                        Text(lengthText)
-                            .font(Theme.Font.data(20, weight: .medium))
-                            .foregroundStyle(.white)
-                            .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 1)
-                    }
+        // 由宽度推导高度的 16:9 盒子（高度有界，避免在 ScrollView 中无限撑高）
+        Color.clear
+            .aspectRatio(16/9, contentMode: .fit)
+            .overlay {
+                photoBackground
+                    .scaledToFill()
+            }
+            .clipped()
+            .overlay {
+                // 底部渐变蒙层
+                LinearGradient(
+                    colors: [.clear, .black.opacity(0.55)],
+                    startPoint: .center,
+                    endPoint: .bottom
+                )
+            }
+            // 左上日期 pill
+            .overlay(alignment: .topLeading) {
+                pillTag(dateText)
+                    .padding(Theme.Space.md)
+            }
+            // 右上钓法 pill
+            .overlay(alignment: .topTrailing) {
+                pillTag("路亚")
+                    .padding(Theme.Space.md)
+            }
+            // 右下体长
+            .overlay(alignment: .bottomTrailing) {
+                if !lengthText.isEmpty {
+                    Text(lengthText)
+                        .font(Theme.Font.data(20, weight: .medium))
+                        .foregroundStyle(.white)
+                        .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 1)
+                        .padding(Theme.Space.md)
                 }
             }
-            .padding(Theme.Space.md)
-        }
-        .frame(maxWidth: .infinity)
-        .aspectRatio(16/9, contentMode: .fill)
-        .clipped()
     }
 
     @ViewBuilder
