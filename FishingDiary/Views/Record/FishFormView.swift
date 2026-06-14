@@ -9,7 +9,9 @@ struct FishFormView: View {
     @State private var showSpeciesPicker = false
     @FocusState private var focusedField: Field?
 
-    private enum Field { case length, weight }
+    private enum Field { case length, weight, notes }
+
+    private let methodOptions = ["路亚", "台钓", "矶钓", "筏钓", "其他"]
 
     private var currentIndex: Int { recordSession.currentFishIndex }
     private var total: Int { recordSession.fishForms.count }
@@ -231,6 +233,38 @@ struct FishFormView: View {
             Divider()
                 .padding(.horizontal, Theme.Space.md)
 
+            // 钓法选择
+            VStack(alignment: .leading, spacing: 8) {
+                Text("钓法".uppercased())
+                    .font(Theme.Font.microLabel)
+                    .kerning(0.5)
+                    .foregroundStyle(Theme.Colors.ink3)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: Theme.Space.sm) {
+                        ForEach(methodOptions, id: \.self) { method in
+                            let isSelected = currentForm.wrappedValue.fishingMethod == method
+                            Button {
+                                currentForm.wrappedValue.fishingMethod = isSelected ? "" : method
+                            } label: {
+                                Text(method)
+                                    .font(Theme.Font.caption)
+                                    .fontWeight(isSelected ? .semibold : .regular)
+                                    .foregroundStyle(isSelected ? .white : Theme.Colors.ink2)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(isSelected ? Theme.Colors.accent : Theme.Colors.bg2)
+                                    .clipShape(Capsule())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+            .padding(Theme.Space.md)
+
+            Divider()
+                .padding(.horizontal, Theme.Space.md)
+
             // 体长 + 重量（并排）
             HStack(spacing: 0) {
                 // 体长
@@ -266,6 +300,23 @@ struct FishFormView: View {
                 .padding(Theme.Space.md)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
+
+            Divider()
+                .padding(.horizontal, Theme.Space.md)
+
+            // 备注
+            VStack(alignment: .leading, spacing: 5) {
+                Text("备注".uppercased())
+                    .font(Theme.Font.microLabel)
+                    .kerning(0.5)
+                    .foregroundStyle(Theme.Colors.ink3)
+                TextField("选填，记录这次钓鱼的故事…", text: currentForm.notes, axis: .vertical)
+                    .font(Theme.Font.body)
+                    .foregroundStyle(Theme.Colors.ink)
+                    .lineLimit(3...5)
+                    .focused($focusedField, equals: .notes)
+            }
+            .padding(Theme.Space.md)
         }
         .background(Theme.Colors.surface)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))

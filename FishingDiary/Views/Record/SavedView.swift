@@ -195,6 +195,11 @@ struct SavedView: View {
             weatherData = try? JSONEncoder().encode(filtered)
         }
 
+        let firstMethod = recordSession.fishForms.first?.fishingMethod ?? ""
+        let combinedNotes = recordSession.fishForms
+            .compactMap { $0.notes.isEmpty ? nil : $0.notes }
+            .joined(separator: "\n")
+
         let session = FishingSession(
             date: .now,
             locationName: recordSession.locationName,
@@ -202,7 +207,9 @@ struct SavedView: View {
             longitude: recordSession.longitude,
             catches: catches,
             weatherData: weatherData,
-            coverImageData: images.first?.pngData()
+            coverImageData: images.first?.pngData(),
+            notes: combinedNotes.isEmpty ? nil : combinedNotes,
+            fishingMethod: firstMethod
         )
         modelContext.insert(session)
 

@@ -5,6 +5,7 @@ import SwiftData
 struct SessionDetailView: View {
     let session: FishingSession
     @State private var navigateToShare = false
+    @State private var showEditSheet = false
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
@@ -59,6 +60,9 @@ struct SessionDetailView: View {
         }
         .navigationDestination(isPresented: $navigateToShare) {
             ShareStyleView(session: session, isRecordPresented: .constant(false))
+        }
+        .sheet(isPresented: $showEditSheet) {
+            EditSessionSheet(session: session)
         }
     }
 
@@ -285,7 +289,7 @@ struct SessionDetailView: View {
     private var bottomActions: some View {
         HStack(spacing: Theme.Space.md) {
             GhostButton(title: "编辑") {
-                // TODO: 编辑功能
+                showEditSheet = true
             }
             .frame(maxWidth: 120)
 
@@ -308,6 +312,140 @@ struct SessionDetailView: View {
             "罗非鱼": "OREOCHROMIS NILOTICUS",
         ]
         return map[species] ?? ""
+    }
+}
+
+// MARK: - 编辑 Sheet
+struct EditSessionSheet: View {
+    let session: FishingSession
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var speciesName: String = ""
+    @State private var lengthCm: String = ""
+    @State private var weightKg: String = ""
+    @State private var notes: String = ""
+    @FocusState private var focusedField: EditField?
+
+    private enum EditField { case length, weight, notes }
+
+    private var firstCatch: FishCatch? { session.catches.min(by: { $0.sortIndex < $1.sortIndex }) }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Theme.Colors.bg.ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: Theme.Space.md) {
+                        formSection
+                    }
+                    .padding(.horizontal, Theme.Space.lg)
+                    .padding(.top, Theme.Space.lg)
+                    .padding(.bottom, 100)
+                }
+            }
+            .navigationTitle("编辑记录")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("取消") { dismiss() }
+                        .foregroundStyle(Theme.Colors.accent)
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("保存") { save() }
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Theme.Colors.accent)
+                }
+            }
+        }
+        .onAppear {
+            speciesName = firstCatch?.speciesName ?? ""
+            lengthCm = firstCatch?.lengthCm.map { "\(Int($0))" } ?? ""
+            weightKg = firstCatch?.weightKg.map { String(format: "%.2f", $0) } ?? ""
+            notes = session.notes ?? ""
+        }
+    }
+
+    private var formSection: some View {
+        VStack(spacing: 0) {
+            // 鱼种
+            VStack(alignment: .leading, spacing: 5) {
+                Text("鱼种".uppercased())
+                    .font(Theme.Font.microLabel)
+                    .kerning(0.5)
+                    .foregroundStyle(Theme.Colors.ink3)
+                TextField("鱼种名称", text: $speciesName)
+                    .font(Theme.Font.body)
+                    .foregroundStyle(Theme.Colors.ink)
+            }
+            .padding(Theme.Space.md)
+
+            Divider().padding(.horizontal, Theme.Space.md)
+
+            // 体长 + 重量
+            HStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("体长 cm".uppercased())
+                        .font(Theme.Font.microLabel)
+                        .kerning(0.5)
+                        .foregroundStyle(Theme.Colors.ink3)
+                    TextField("38", text: $lengthCm)
+                        .font(Theme.Font.data(24, weight: .medium))
+                        .foregroundStyle(Theme.Colors.ink)
+                        .keyboardType(.decimalPad)
+                        .focused($focusedField, equals: .length)
+                }
+                .padding(Theme.Space.md)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Divider().frame(height: 56)
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("重量 kg".uppercased())
+                        .font(Theme.Font.microLabel)
+                        .kerning(0.5)
+                        .foregroundStyle(Theme.Colors.ink3)
+                    TextField("选填", text: $weightKg)
+                        .font(Theme.Font.data(24, weight: .medium))
+                        .foregroundStyle(Theme.Colors.ink)
+                        .keyboardType(.decimalPad)
+                        .focused($focusedField, equals: .weight)
+                }
+                .padding(Theme.Space.md)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            Divider().padding(.horizontal, Theme.Space.md)
+
+            // 备注
+            VStack(alignment: .leading, spacing: 5) {
+                Text("备注".uppercased())
+                    .font(Theme.Font.microLabel)
+                    .kerning(0.5)
+                    .foregroundStyle(Theme.Colors.ink3)
+                TextField("记录这次钓鱼的故事…", text: $notes, axis: .vertical)
+                    .font(Theme.Font.body)
+                    .foregroundStyle(Theme.Colors.ink)
+                    .lineLimit(3...5)
+                    .focused($focusedField, equals: .notes)
+            }
+            .padding(Theme.Space.md)
+        }
+        .background(Theme.Colors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
+        .shadowSoft()
+    }
+
+    private func save() {
+        if let catch_ = firstCatch {
+            catch_.speciesName = speciesName.isEmpty ? catch_.speciesName : speciesName
+            catch_.lengthCm = Double(lengthCm)
+            catch_.weightKg = Double(weightKg)
+        }
+        session.notes = notes.isEmpty ? nil : notes
+        try? modelContext.save()
+        dismiss()
     }
 }
 

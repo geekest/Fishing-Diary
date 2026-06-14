@@ -6,6 +6,7 @@ struct MinimalCardView: View {
     let session: FishingSession
     let visibleElements: ShareElementsConfig
     var showWatermark: Bool = false  // 付费后去水印
+    var ratio: CGFloat = 3.0/4.0
 
     private var firstCatch: FishCatch? { session.catches.min(by: { $0.sortIndex < $1.sortIndex }) }
     private var weather: WeatherSnapshot? { session.weather }
@@ -35,7 +36,7 @@ struct MinimalCardView: View {
                 if showWatermark { topWatermark }
             }
         }
-        .aspectRatio(3.0/4.0, contentMode: .fit)
+        .aspectRatio(ratio, contentMode: .fit)
         .background(Color.black)
         .clipShape(RoundedRectangle(cornerRadius: 0))
     }

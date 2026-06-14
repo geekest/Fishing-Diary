@@ -14,6 +14,7 @@ class FishingSession {
     var weatherData: Data?            // WeatherSnapshot 序列化存储
     var coverImageData: Data?         // 封面图（第一条鱼的抠图）
     var notes: String?
+    var fishingMethod: String = ""    // 钓法（路亚/台钓/矶钓/筏钓/其他）
 
     init(
         id: UUID = UUID(),
@@ -24,7 +25,8 @@ class FishingSession {
         catches: [FishCatch] = [],
         weatherData: Data? = nil,
         coverImageData: Data? = nil,
-        notes: String? = nil
+        notes: String? = nil,
+        fishingMethod: String = ""
     ) {
         self.id = id
         self.date = date
@@ -35,6 +37,7 @@ class FishingSession {
         self.weatherData = weatherData
         self.coverImageData = coverImageData
         self.notes = notes
+        self.fishingMethod = fishingMethod
     }
 
     /// 解码天气快照

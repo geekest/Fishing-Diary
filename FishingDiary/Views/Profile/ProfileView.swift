@@ -7,6 +7,8 @@ struct ProfileView: View {
     @EnvironmentObject var purchaseService: PurchaseService
     @AppStorage("userName") private var userName: String = "钓鱼人"
 
+    private let speciesDexTotal = 60
+
     // MARK: 统计聚合
     private var totalCatch: Int { sessions.reduce(0) { $0 + $1.catches.count } }
     private var speciesCount: Int {
@@ -183,7 +185,7 @@ struct ProfileView: View {
             HStack {
                 SectionLabel(text: "鱼种图鉴")
                 Spacer()
-                Text("\(caughtSpecies.count) / 60 已解锁 ›")
+                Text("\(caughtSpecies.count) / \(speciesDexTotal) 已解锁 ›")
                     .font(Theme.Font.microLabel)
                     .foregroundStyle(Theme.Colors.ink2)
             }

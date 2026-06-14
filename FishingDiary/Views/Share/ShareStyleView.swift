@@ -107,79 +107,9 @@ struct ShareStyleView: View {
     }
 
     private var livePreviewCard: some View {
-        ZStack(alignment: .bottomLeading) {
-            // 背景
-            previewBackground(for: selectedStyle)
-                .aspectRatio(selectedRatio.aspectRatio, contentMode: .fit)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-
-            // 蒙层
-            if selectedStyle == .minimal || selectedStyle == .tech {
-                LinearGradient(colors: [.clear, .black.opacity(0.6)], startPoint: .center, endPoint: .bottom)
-                    .aspectRatio(selectedRatio.aspectRatio, contentMode: .fit)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-            }
-
-            // 内容
-            previewContent(for: selectedStyle)
-        }
-        .shadowCard()
-    }
-
-    @ViewBuilder
-    private func previewBackground(for style: CardStyle) -> some View {
-        switch style {
-        case .minimal:
-            Theme.Colors.catchGradientForest
-        case .tech:
-            LinearGradient(colors: [Color(hex: "0A0F1C"), Color(hex: "1A3050")],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-        case .sticker:
-            Color(hex: "EDE5CE")
-        case .film:
-            Color(hex: "D4C9A8")
-        }
-    }
-
-    @ViewBuilder
-    private func previewContent(for style: CardStyle) -> some View {
-        switch style {
-        case .minimal:
-            VStack(alignment: .leading, spacing: 2) {
-                Text("FISHING LOG · 06.13")
-                    .font(Theme.Font.microLabel)
-                    .foregroundStyle(.white.opacity(0.7))
-                Text("38").font(Theme.Font.data(22, weight: .medium)).foregroundStyle(.white)
-                    + Text("cm").font(.system(size: 9)).foregroundStyle(.white.opacity(0.8))
-                Text("大口黑鲈").font(.system(size: 10, weight: .semibold)).foregroundStyle(.white.opacity(0.9))
-                Rectangle().fill(.white.opacity(0.4)).frame(height: 0.8).padding(.vertical, 3)
-            }
-            .padding(10)
-
-        case .tech:
-            VStack(alignment: .leading, spacing: 2) {
-                Text("FISHING DATA").font(Theme.Font.microLabel).foregroundStyle(Color(hex: "00E5FF").opacity(0.8))
-                Text("38cm").font(Theme.Font.data(18, weight: .bold)).foregroundStyle(.white)
-            }
-            .padding(10)
-
-        case .sticker:
-            VStack(alignment: .leading, spacing: 2) {
-                Text("今日战果").font(.system(size: 12)).foregroundStyle(Color(hex: "3C3422"))
-                Image(systemName: "fish.fill")
-                    .font(.system(size: 30))
-                    .foregroundStyle(Theme.Colors.accent.opacity(0.7))
-                    .offset(x: -8, y: 4)
-            }
-            .padding(10)
-
-        case .film:
-            ZStack {
-                RoundedRectangle(cornerRadius: 2)
-                    .stroke(.white, lineWidth: 5)
-                    .padding(6)
-            }
-        }
+        MinimalCardView(session: session, visibleElements: ShareElementsConfig(), showWatermark: false, ratio: selectedRatio.aspectRatio)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .shadowCard()
     }
 
     // MARK: - 画幅选择
@@ -298,12 +228,33 @@ struct ShareStyleView: View {
 
     @ViewBuilder
     private func styleThumbnail(for style: CardStyle) -> some View {
-        ZStack(alignment: .bottomLeading) {
-            previewBackground(for: style)
-            if style != .film {
+        switch style {
+        case .minimal:
+            MinimalCardView(session: session, visibleElements: ShareElementsConfig(), showWatermark: false)
+        case .tech:
+            ZStack(alignment: .bottomLeading) {
+                LinearGradient(colors: [Color(hex: "0A0F1C"), Color(hex: "1A3050")],
+                               startPoint: .topLeading, endPoint: .bottomTrailing)
                 LinearGradient(colors: [.clear, .black.opacity(0.5)], startPoint: .center, endPoint: .bottom)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("FISHING DATA").font(Theme.Font.microLabel).foregroundStyle(Color(hex: "00E5FF").opacity(0.8))
+                }
+                .padding(10)
             }
-            previewContent(for: style)
+        case .sticker:
+            ZStack(alignment: .bottomLeading) {
+                Color(hex: "EDE5CE")
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("今日战果").font(.system(size: 12)).foregroundStyle(Color(hex: "3C3422"))
+                    Image(systemName: "fish.fill").font(.system(size: 30)).foregroundStyle(Theme.Colors.accent.opacity(0.7)).offset(x: -8, y: 4)
+                }
+                .padding(10)
+            }
+        case .film:
+            ZStack {
+                Color(hex: "D4C9A8")
+                RoundedRectangle(cornerRadius: 2).stroke(.white, lineWidth: 5).padding(6)
+            }
         }
     }
 }

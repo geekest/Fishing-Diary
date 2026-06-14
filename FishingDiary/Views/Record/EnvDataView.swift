@@ -83,7 +83,7 @@ struct EnvDataView: View {
                         divider
                         toggleRow(label: "气压", value: "\(Int(w.pressure)) hPa", isOn: bindToggle(\.pressure))
                         divider
-                        toggleRow(label: "紫外线 UVI", value: "中等 · \(w.uvIndex)", isOn: bindToggle(\.uvIndex))
+                        toggleRow(label: "紫外线 UVI", value: "\(uvLevel(w.uvIndex)) · \(w.uvIndex)", isOn: bindToggle(\.uvIndex))
                         divider
                         toggleRow(label: "潮汐", value: w.tide ?? "暂无", isOn: bindToggle(\.tide))
                         divider
@@ -122,6 +122,15 @@ struct EnvDataView: View {
         }
         .padding(.horizontal, Theme.Space.lg)
         .padding(.vertical, 14)
+    }
+
+    private func uvLevel(_ index: Int) -> String {
+        switch index {
+        case 0...2: return "低"
+        case 3...5: return "中等"
+        case 6...7: return "高"
+        default:    return "极高"
+        }
     }
 
     // MARK: - 绑定辅助

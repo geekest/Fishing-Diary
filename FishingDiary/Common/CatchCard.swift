@@ -66,8 +66,10 @@ struct CatchCard: View {
             }
             // 右上钓法 pill
             .overlay(alignment: .topTrailing) {
-                pillTag("路亚")
-                    .padding(Theme.Space.md)
+                if !session.fishingMethod.isEmpty {
+                    pillTag(session.fishingMethod)
+                        .padding(Theme.Space.md)
+                }
             }
             // 右下体长
             .overlay(alignment: .bottomTrailing) {

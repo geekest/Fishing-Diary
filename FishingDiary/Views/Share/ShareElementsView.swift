@@ -93,14 +93,16 @@ struct ShareElementsView: View {
 
             HStack {
                 Spacer()
-                MinimalCardView(session: session, visibleElements: config, showWatermark: false)
+                MinimalCardView(session: session, visibleElements: config, showWatermark: false, ratio: ratio.aspectRatio)
                     .frame(height: 180)
-                    .aspectRatio(ratio.aspectRatio, contentMode: .fit)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .shadowCard()
                     .animation(.easeInOut(duration: 0.2), value: config.showFishAndLength)
                     .animation(.easeInOut(duration: 0.2), value: config.showLocation)
                     .animation(.easeInOut(duration: 0.2), value: config.showTide)
+                    .animation(.easeInOut(duration: 0.2), value: config.showPressure)
+                    .animation(.easeInOut(duration: 0.2), value: config.showWind)
+                    .animation(.easeInOut(duration: 0.2), value: config.showUVAndTemp)
                 Spacer()
             }
         }
