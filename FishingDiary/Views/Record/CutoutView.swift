@@ -95,7 +95,7 @@ struct CutoutView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .sheet(isPresented: $showCropper) {
+        .fullScreenCover(isPresented: $showCropper) {
             if let img = currentImage {
                 CropViewControllerWrapper(image: img) { cropped in
                     showCropper = false
@@ -103,6 +103,7 @@ struct CutoutView: View {
                 } onCancel: {
                     showCropper = false
                 }
+                .ignoresSafeArea()
             }
         }
         .navigationDestination(isPresented: $navigateToFillFish) {
@@ -170,6 +171,9 @@ struct CutoutView: View {
 }
 
 // MARK: - TOCropViewController 包装
+/// 用一个宿主控制器以「全屏模态」方式呈现 TOCropViewController，
+/// 确保其底部工具栏（取消 / 完成 / 旋转 / 比例）正常显示在安全区之上，
+/// 避免内嵌进 SwiftUI sheet 时工具栏被挤到屏幕最底端而无法点击。
 struct CropViewControllerWrapper: UIViewControllerRepresentable {
     let image: UIImage
     let onCrop: (UIImage) -> Void
@@ -177,29 +181,52 @@ struct CropViewControllerWrapper: UIViewControllerRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
-    func makeUIViewController(context: Context) -> TOCropViewController {
-        let vc = TOCropViewController(croppingStyle: .default, image: image)
-        vc.delegate = context.coordinator
-        vc.resetAspectRatioEnabled = false
-        return vc
+    func makeUIViewController(context: Context) -> UIViewController {
+        let host = UIViewController()
+        host.view.backgroundColor = .black
+        return host
     }
 
-    func updateUIViewController(_ uiViewController: TOCropViewController, context: Context) {}
+    func updateUIViewController(_ host: UIViewController, context: Context) {
+        guard !context.coordinator.didPresent else { return }
+        context.coordinator.didPresent = true
+
+        let cropVC = TOCropViewController(croppingStyle: .default, image: image)
+        cropVC.delegate = context.coordinator
+        cropVC.resetAspectRatioEnabled = true
+        cropVC.aspectRatioLockEnabled = false
+        cropVC.rotateButtonsHidden = false          // 逆时针旋转
+        cropVC.rotateClockwiseButtonHidden = false  // 顺时针旋转
+        cropVC.aspectRatioPickerButtonHidden = false
+        cropVC.doneButtonTitle = "完成"
+        cropVC.cancelButtonTitle = "取消"
+        cropVC.modalPresentationStyle = .fullScreen
+        cropVC.modalTransitionStyle = .crossDissolve
+
+        DispatchQueue.main.async {
+            host.present(cropVC, animated: true)
+        }
+    }
 
     class Coordinator: NSObject, TOCropViewControllerDelegate {
         let parent: CropViewControllerWrapper
+        var didPresent = false
         init(_ parent: CropViewControllerWrapper) { self.parent = parent }
 
         func cropViewController(_ cropViewController: TOCropViewController,
                                 didCropTo image: UIImage,
                                 with cropRect: CGRect,
                                 angle: Int) {
-            parent.onCrop(image)
+            cropViewController.dismiss(animated: true) {
+                self.parent.onCrop(image)
+            }
         }
 
         func cropViewController(_ cropViewController: TOCropViewController,
                                 didFinishCancelled cancelled: Bool) {
-            if cancelled { parent.onCancel() }
+            cropViewController.dismiss(animated: true) {
+                self.parent.onCancel()
+            }
         }
     }
 }

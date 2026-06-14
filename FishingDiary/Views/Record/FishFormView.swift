@@ -258,8 +258,8 @@ struct FishFormView: View {
                         .kerning(0.5)
                         .foregroundStyle(Theme.Colors.ink3)
                     TextField("选填", text: currentForm.weightKg)
-                        .font(Theme.Font.body)
-                        .foregroundStyle(Theme.Colors.ink3)
+                        .font(Theme.Font.data(24, weight: .medium))
+                        .foregroundStyle(Theme.Colors.ink)
                         .keyboardType(.decimalPad)
                         .focused($focusedField, equals: .weight)
                 }
