@@ -164,7 +164,7 @@ struct SpeciesPickerSheet: View {
                                 HStack {
                                     Image(systemName: "plus.circle.fill")
                                         .foregroundStyle(Theme.Colors.accent)
-                                    Text("添加 "\(searchText)"")
+                                    Text("添加「\(searchText)」")
                                         .font(Theme.Font.subhead)
                                         .foregroundStyle(Theme.Colors.accent)
                                     Spacer()
