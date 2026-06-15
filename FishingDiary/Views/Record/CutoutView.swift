@@ -1,90 +1,90 @@
 import SwiftUI
 import UIKit
+import Vision
+import CoreImage
 import TOCropViewController
 
-/// 批量抠图界面：逐张用 TOCropViewController 裁剪
+// MARK: - 抠图模式
+enum CutoutMode: Int, CaseIterable {
+    case auto, manual, keep
+
+    var title: String {
+        switch self {
+        case .auto:   return "自动抠图"
+        case .manual: return "手动微调"
+        case .keep:   return "留背景"
+        }
+    }
+}
+
+/// 批量抠图界面：进图自动用 Vision 抠出主体（鱼），可手动微调或保留背景
 struct CutoutView: View {
     @Binding var isRecordPresented: Bool
     @EnvironmentObject var recordSession: RecordSession
 
+    @State private var modes: [CutoutMode] = []
+    @State private var liftCache: [Int: UIImage] = [:]      // 透明抠图缓存
+    @State private var stickerCache: [Int: UIImage] = [:]   // 白描边贴纸缓存（仅预览用）
+    @State private var processingIndex: Int? = nil
+    @State private var autoFailed = false
     @State private var showCropper = false
     @State private var navigateToFillFish = false
 
     private var total: Int { recordSession.rawImages.count }
     private var currentIndex: Int { recordSession.currentCutoutIndex }
-    private var currentImage: UIImage? {
-        guard currentIndex < total else { return nil }
-        return recordSession.rawImages[currentIndex]
+    private var currentMode: CutoutMode { modes[safe: currentIndex] ?? .auto }
+    private var currentRaw: UIImage? { recordSession.rawImages[safe: currentIndex] }
+    private var isProcessing: Bool { processingIndex == currentIndex }
+    private var isLast: Bool { currentIndex + 1 >= total }
+
+    private var displayImage: UIImage? {
+        switch currentMode {
+        case .auto:
+            return stickerCache[currentIndex] ?? liftCache[currentIndex] ?? currentRaw
+        case .keep:
+            return currentRaw
+        case .manual:
+            return (recordSession.cutoutImages[safe: currentIndex].flatMap { $0 }) ?? currentRaw
+        }
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            // 进度队列
             queueRow
 
             Divider().padding(.vertical, 8)
 
-            // 提示文字
-            Text("一张图＝一尾鱼，逐张抠 ↓")
+            Text("一张图＝一尾鱼，已自动抠出主体 ↓")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal)
 
-            // 当前图预览
-            if let img = currentImage {
-                Image(uiImage: img)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxHeight: 320)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .padding(.horizontal)
-                    .padding(.top, 8)
-                    .onTapGesture { showCropper = true }
-                    .overlay(alignment: .topLeading) {
-                        Text("第 \(currentIndex + 1) 张 · 点击裁剪")
-                            .font(.caption2)
-                            .padding(6)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Capsule())
-                            .padding(16)
-                    }
-            }
+            previewArea
 
-            // 抠图模式选择器（UI 展示，TOCropViewController 统一处理）
-            Picker("", selection: .constant(0)) {
-                Text("自动抠图").tag(0)
-                Text("手动微调").tag(1)
-                Text("留背景").tag(2)
+            // 模式分段控件（真实生效）
+            Picker("", selection: modeBinding) {
+                ForEach(CutoutMode.allCases, id: \.self) { mode in
+                    Text(mode.title).tag(mode)
+                }
             }
             .pickerStyle(.segmented)
             .padding(.horizontal)
             .padding(.top, 12)
 
+            // 失败提示
+            if autoFailed {
+                Text(autoFailHint)
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+                    .padding(.top, 6)
+            }
+
             Spacer()
 
-            // 底部按钮
-            HStack(spacing: 12) {
-                Button("跳过") { advance(withCutout: nil) }
-                    .frame(width: 80)
-                    .padding(.vertical, 14)
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-
-                Button {
-                    showCropper = true
-                } label: {
-                    Text("开始裁剪 · 下一张 ›")
-                        .fontWeight(.semibold)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Color.accentColor)
-                        .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-            }
-            .padding(.horizontal)
-            .padding(.bottom, 24)
+            bottomBar
         }
         .navigationTitle("抠图剪切")
         .navigationBarTitleDisplayMode(.inline)
@@ -95,11 +95,17 @@ struct CutoutView: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .task(id: currentIndex) {
+            ensureModesSized()
+            if currentMode == .auto, liftCache[currentIndex] == nil {
+                await performAutoCutout(for: currentIndex)
+            }
+        }
         .fullScreenCover(isPresented: $showCropper) {
-            if let img = currentImage {
+            if let img = currentRaw {
                 CropViewControllerWrapper(image: img) { cropped in
                     showCropper = false
-                    advance(withCutout: cropped)
+                    storeManual(cropped)
                 } onCancel: {
                     showCropper = false
                 }
@@ -109,6 +115,38 @@ struct CutoutView: View {
         .navigationDestination(isPresented: $navigateToFillFish) {
             FishFormView(isRecordPresented: $isRecordPresented)
         }
+    }
+
+    // MARK: - 预览区
+    private var previewArea: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Theme.Colors.bg2)
+
+            if isProcessing {
+                if let raw = currentRaw {
+                    Image(uiImage: raw)
+                        .resizable()
+                        .scaledToFit()
+                        .opacity(0.2)
+                        .padding(8)
+                }
+                VStack(spacing: 10) {
+                    ProgressView().tint(Theme.Colors.accent)
+                    Text("AI 正在识别并抠出主体…")
+                        .font(Theme.Font.caption)
+                        .foregroundStyle(Theme.Colors.ink2)
+                }
+            } else if let img = displayImage {
+                Image(uiImage: img)
+                    .resizable()
+                    .scaledToFit()
+                    .padding(8)
+            }
+        }
+        .frame(maxHeight: 340)
+        .padding(.horizontal)
+        .padding(.top, 8)
     }
 
     // MARK: - 进度队列行
@@ -129,7 +167,6 @@ struct CutoutView: View {
                                         .stroke(i == currentIndex ? Color.accentColor : .clear, lineWidth: 2)
                                 )
                         }
-                        // 完成标记
                         if i < currentIndex {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundStyle(.white, Color.accentColor)
@@ -144,36 +181,220 @@ struct CutoutView: View {
         }
     }
 
-    // MARK: - 推进到下一张
-    private func advance(withCutout result: UIImage?) {
-        // 存入抠图结果
-        if recordSession.cutoutImages.count > currentIndex {
-            recordSession.cutoutImages[currentIndex] = result
+    // MARK: - 底部按钮
+    private var bottomBar: some View {
+        HStack(spacing: 12) {
+            if currentIndex > 0 {
+                Button {
+                    recordSession.currentCutoutIndex -= 1
+                } label: {
+                    Text("‹ 上一张")
+                        .fontWeight(.medium)
+                        .frame(width: 96)
+                        .padding(.vertical, 14)
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+            }
+
+            Button {
+                advance()
+            } label: {
+                Text(isLast ? "完成 · 填写信息 ›" : "下一张 ›")
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color.accentColor)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+        }
+        .padding(.horizontal)
+        .padding(.bottom, 24)
+    }
+
+    private var autoFailHint: String {
+        SubjectCutoutService.isAvailable
+            ? "没识别到明显主体，已暂时保留原图，可改用「手动微调」"
+            : "当前系统不支持自动抠图（需 iOS 17），已保留原图"
+    }
+
+    // MARK: - 模式绑定
+    private var modeBinding: Binding<CutoutMode> {
+        Binding(
+            get: { currentMode },
+            set: { applyMode($0) }
+        )
+    }
+
+    private func applyMode(_ mode: CutoutMode) {
+        ensureModesSized()
+        modes[currentIndex] = mode
+        autoFailed = false
+        switch mode {
+        case .keep:
+            setCutout(nil, at: currentIndex)
+        case .manual:
+            showCropper = true
+        case .auto:
+            if let cached = liftCache[currentIndex] {
+                setCutout(cached, at: currentIndex)
+            } else {
+                Task { await performAutoCutout(for: currentIndex) }
+            }
+        }
+    }
+
+    // MARK: - 自动抠图
+    @MainActor
+    private func performAutoCutout(for index: Int) async {
+        guard let raw = recordSession.rawImages[safe: index] else { return }
+        autoFailed = false
+        processingIndex = index
+
+        let normalized = raw.normalizedUp()
+        let cutout = await SubjectCutoutService.liftSubject(from: normalized)
+        let sticker = await SubjectCutoutService.makeSticker(from: cutout)
+
+        if let cutout {
+            liftCache[index] = cutout
+            stickerCache[index] = sticker
+            setCutout(cutout, at: index)
         } else {
-            recordSession.cutoutImages.append(result)
+            // 失败：iOS<17 或没识别到主体 → 退回保留原图
+            setCutout(nil, at: index)
+            if modes.indices.contains(index) { modes[index] = .keep }
+            autoFailed = true
         }
 
-        let next = currentIndex + 1
-        if next >= total {
-            // 所有图处理完毕，初始化鱼表单并跳转
+        if processingIndex == index { processingIndex = nil }
+    }
+
+    // MARK: - 手动裁剪结果
+    private func storeManual(_ cropped: UIImage) {
+        ensureModesSized()
+        modes[currentIndex] = .manual
+        setCutout(cropped, at: currentIndex)
+    }
+
+    // MARK: - 推进
+    private func advance() {
+        if isLast {
             prepareFishForms()
             navigateToFillFish = true
         } else {
-            recordSession.currentCutoutIndex = next
+            recordSession.currentCutoutIndex += 1
         }
     }
 
     private func prepareFishForms() {
-        // 每张图默认一尾鱼
-        recordSession.fishForms = (0..<total).map { _ in FishForm() }
+        if recordSession.fishForms.count != total {
+            recordSession.fishForms = (0..<total).map { _ in FishForm() }
+        }
         recordSession.currentFishIndex = 0
+    }
+
+    // MARK: - 工具
+    private func ensureModesSized() {
+        if modes.count != total {
+            modes = Array(repeating: .auto, count: total)
+        }
+    }
+
+    private func setCutout(_ image: UIImage?, at index: Int) {
+        guard recordSession.cutoutImages.indices.contains(index) else { return }
+        recordSession.cutoutImages[index] = image
+    }
+}
+
+// MARK: - 主体抠图服务（Vision 前景主体蒙版，iOS 17+）
+enum SubjectCutoutService {
+    /// 是否支持自动抠图
+    static var isAvailable: Bool {
+        if #available(iOS 17.0, *) { return true }
+        return false
+    }
+
+    /// 把主体（鱼）从背景抠出，返回透明背景图；不支持或失败返回 nil
+    static func liftSubject(from image: UIImage) async -> UIImage? {
+        guard #available(iOS 17.0, *) else { return nil }
+        return await liftSubjectiOS17(from: image)
+    }
+
+    @available(iOS 17.0, *)
+    private static func liftSubjectiOS17(from image: UIImage) async -> UIImage? {
+        guard let cgImage = image.cgImage else { return nil }
+        return await withCheckedContinuation { (cont: CheckedContinuation<UIImage?, Never>) in
+            DispatchQueue.global(qos: .userInitiated).async {
+                let request = VNGenerateForegroundInstanceMaskRequest()
+                let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+                do {
+                    try handler.perform([request])
+                    guard let result = request.results?.first,
+                          !result.allInstances.isEmpty else {
+                        cont.resume(returning: nil)
+                        return
+                    }
+                    let buffer = try result.generateMaskedImage(
+                        ofInstances: result.allInstances,
+                        from: handler,
+                        croppedToInstancesExtent: true
+                    )
+                    let ciImage = CIImage(cvPixelBuffer: buffer)
+                    let context = CIContext()
+                    guard let cg = context.createCGImage(ciImage, from: ciImage.extent) else {
+                        cont.resume(returning: nil)
+                        return
+                    }
+                    cont.resume(returning: UIImage(cgImage: cg))
+                } catch {
+                    cont.resume(returning: nil)
+                }
+            }
+        }
+    }
+
+    /// 后台生成白描边贴纸（仅用于展示，不改动存储的透明抠图）
+    static func makeSticker(from cutout: UIImage?) async -> UIImage? {
+        guard let cutout else { return nil }
+        return await withCheckedContinuation { (cont: CheckedContinuation<UIImage?, Never>) in
+            DispatchQueue.global(qos: .userInitiated).async {
+                cont.resume(returning: sticker(from: cutout))
+            }
+        }
+    }
+
+    /// 给透明抠图加白色描边：多方向偏移叠白色剪影，再叠原抠图
+    static func sticker(from cutout: UIImage, outline: CGFloat = 12) -> UIImage {
+        let size = cutout.size
+        guard size.width > 0, size.height > 0 else { return cutout }
+
+        // 白色剪影（保留 alpha 边缘）
+        let silhouette = UIGraphicsImageRenderer(size: size).image { ctx in
+            cutout.draw(at: .zero)
+            ctx.cgContext.setBlendMode(.sourceAtop)
+            UIColor.white.setFill()
+            ctx.cgContext.fill(CGRect(origin: .zero, size: size))
+        }
+
+        let pad = outline
+        let newSize = CGSize(width: size.width + pad * 2, height: size.height + pad * 2)
+        let center = CGRect(x: pad, y: pad, width: size.width, height: size.height)
+
+        return UIGraphicsImageRenderer(size: newSize).image { _ in
+            let steps = 24
+            for i in 0..<steps {
+                let angle = CGFloat(i) / CGFloat(steps) * 2 * .pi
+                silhouette.draw(in: center.offsetBy(dx: cos(angle) * pad, dy: sin(angle) * pad))
+            }
+            cutout.draw(in: center)
+        }
     }
 }
 
 // MARK: - TOCropViewController 包装
 /// 用一个宿主控制器以「全屏模态」方式呈现 TOCropViewController，
-/// 确保其底部工具栏（取消 / 完成 / 旋转 / 比例）正常显示在安全区之上，
-/// 避免内嵌进 SwiftUI sheet 时工具栏被挤到屏幕最底端而无法点击。
+/// 确保其底部工具栏（取消 / 完成 / 旋转 / 比例）正常显示在安全区之上。
 struct CropViewControllerWrapper: UIViewControllerRepresentable {
     let image: UIImage
     let onCrop: (UIImage) -> Void
@@ -195,8 +416,8 @@ struct CropViewControllerWrapper: UIViewControllerRepresentable {
         cropVC.delegate = context.coordinator
         cropVC.resetAspectRatioEnabled = true
         cropVC.aspectRatioLockEnabled = false
-        cropVC.rotateButtonsHidden = false          // 逆时针旋转
-        cropVC.rotateClockwiseButtonHidden = false  // 顺时针旋转
+        cropVC.rotateButtonsHidden = false
+        cropVC.rotateClockwiseButtonHidden = false
         cropVC.aspectRatioPickerButtonHidden = false
         cropVC.doneButtonTitle = "完成"
         cropVC.cancelButtonTitle = "取消"
@@ -235,6 +456,18 @@ struct CropViewControllerWrapper: UIViewControllerRepresentable {
 extension Array {
     subscript(safe index: Int) -> Element? {
         indices.contains(index) ? self[index] : nil
+    }
+}
+
+// MARK: - 图片方向归一化
+extension UIImage {
+    /// 把带 EXIF 方向的图重绘成 .up，避免 Vision 处理后坐标错位
+    func normalizedUp() -> UIImage {
+        guard imageOrientation != .up else { return self }
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { _ in
+            draw(in: CGRect(origin: .zero, size: size))
+        }
     }
 }
 
