@@ -149,6 +149,11 @@ struct EnvDataView: View {
         if recordSession.locationName.isEmpty {
             recordSession.locationName = "千岛湖 · 大坝南"
         }
+        // 写入坐标，供详情页地图使用（暂用 mock 定位）
+        if recordSession.latitude == nil || recordSession.longitude == nil {
+            recordSession.latitude = mockLocation.coordinate.latitude
+            recordSession.longitude = mockLocation.coordinate.longitude
+        }
         isLoading = false
     }
 }

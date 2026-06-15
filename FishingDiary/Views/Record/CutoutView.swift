@@ -418,6 +418,13 @@ enum SubjectCutoutService {
         return result
     }
 
+    /// 渔获图片被编辑后，清掉对应缓存，让分享卡重新生成
+    static func clearCardCache(id: UUID) {
+        let key = id.uuidString
+        stickerStore[key] = nil
+        blurStore[key] = nil
+    }
+
     private static func blurred(_ image: UIImage, sigma: CGFloat) -> UIImage? {
         guard let cg = image.cgImage else { return nil }
         let ci = CIImage(cgImage: cg)
