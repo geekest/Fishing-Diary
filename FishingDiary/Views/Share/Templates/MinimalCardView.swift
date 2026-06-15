@@ -11,11 +11,29 @@ struct MinimalCardView: View {
     private var firstCatch: FishCatch? { session.catches.min(by: { $0.sortIndex < $1.sortIndex }) }
     private var weather: WeatherSnapshot? { session.weather }
 
+    /// 模糊背景图（原图）
+    private var blurredBackground: UIImage? {
+        if let c = firstCatch, !c.originalImageData.isEmpty {
+            return SubjectCutoutService.cardBackground(id: c.id, originalData: c.originalImageData)
+        }
+        if let data = session.coverImageData { return UIImage(data: data) }
+        return nil
+    }
+
+    /// 白描边贴纸（抠图加白描边）
+    private var fishSticker: UIImage? {
+        guard let c = firstCatch, !c.cutoutImageData.isEmpty else { return nil }
+        return SubjectCutoutService.cardSticker(id: c.id, cutoutData: c.cutoutImageData)
+    }
+
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .bottomLeading) {
-                // 背景图（鱼的抠图或纯色）
+                // 模糊背景
                 background(in: geo.size)
+
+                // 白描边鱼贴纸（浮于背景之上）
+                stickerLayer(in: geo.size)
 
                 // 渐变蒙层
                 LinearGradient(
@@ -44,7 +62,7 @@ struct MinimalCardView: View {
     // MARK: - 背景
     private func background(in size: CGSize) -> some View {
         Group {
-            if let data = session.coverImageData, let img = UIImage(data: data) {
+            if let img = blurredBackground {
                 Image(uiImage: img)
                     .resizable()
                     .scaledToFill()
@@ -58,6 +76,17 @@ struct MinimalCardView: View {
                     endPoint: .bottomTrailing
                 )
             }
+        }
+    }
+
+    // MARK: - 白描边贴纸层
+    @ViewBuilder
+    private func stickerLayer(in size: CGSize) -> some View {
+        if let sticker = fishSticker {
+            Image(uiImage: sticker)
+                .resizable()
+                .scaledToFit()
+                .frame(width: size.width, height: size.height, alignment: .top)
         }
     }
 

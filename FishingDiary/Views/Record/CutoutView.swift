@@ -390,6 +390,44 @@ enum SubjectCutoutService {
             cutout.draw(in: center)
         }
     }
+
+    // MARK: - 分享卡用：白描边贴纸 + 模糊背景（带缓存，避免 ImageRenderer 反复重算）
+    private static var stickerStore: [String: UIImage] = [:]
+    private static var blurStore: [String: UIImage] = [:]
+
+    /// 取一尾鱼的白描边贴纸（透明抠图 → 加白描边），按渔获 id 缓存
+    static func cardSticker(id: UUID, cutoutData: Data) -> UIImage? {
+        let key = id.uuidString
+        if let hit = stickerStore[key] { return hit }
+        guard !cutoutData.isEmpty, let cutout = UIImage(data: cutoutData) else { return nil }
+        let scaled = cutout.resized(maxDimension: 1200)
+        let pad = max(scaled.size.width, scaled.size.height) * 0.02
+        let result = sticker(from: scaled, outline: pad)
+        stickerStore[key] = result
+        return result
+    }
+
+    /// 取一尾鱼的模糊背景（原图高斯模糊），按渔获 id 缓存
+    static func cardBackground(id: UUID, originalData: Data) -> UIImage? {
+        let key = id.uuidString
+        if let hit = blurStore[key] { return hit }
+        guard !originalData.isEmpty, let original = UIImage(data: originalData) else { return nil }
+        let scaled = original.resized(maxDimension: 1200)
+        let result = blurred(scaled, sigma: 18) ?? scaled
+        blurStore[key] = result
+        return result
+    }
+
+    private static func blurred(_ image: UIImage, sigma: CGFloat) -> UIImage? {
+        guard let cg = image.cgImage else { return nil }
+        let ci = CIImage(cgImage: cg)
+        let output = ci.clampedToExtent()
+            .applyingGaussianBlur(sigma: Double(sigma))
+            .cropped(to: ci.extent)
+        let context = CIContext()
+        guard let cgOut = context.createCGImage(output, from: ci.extent) else { return nil }
+        return UIImage(cgImage: cgOut)
+    }
 }
 
 // MARK: - TOCropViewController 包装
@@ -467,6 +505,18 @@ extension UIImage {
         let renderer = UIGraphicsImageRenderer(size: size)
         return renderer.image { _ in
             draw(in: CGRect(origin: .zero, size: size))
+        }
+    }
+
+    /// 等比缩放到最长边不超过 maxDimension（用于控制贴纸/背景的生成开销）
+    func resized(maxDimension: CGFloat) -> UIImage {
+        let maxSide = max(size.width, size.height)
+        guard maxSide > maxDimension, maxSide > 0 else { return self }
+        let scale = maxDimension / maxSide
+        let newSize = CGSize(width: size.width * scale, height: size.height * scale)
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        return renderer.image { _ in
+            draw(in: CGRect(origin: .zero, size: newSize))
         }
     }
 }
