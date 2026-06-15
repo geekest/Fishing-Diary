@@ -77,6 +77,7 @@ struct SessionDetailView: View {
             }
             Button("取消", role: .cancel) {}
         }
+        .hidesFloatingTabBar()
     }
 
     // MARK: - 英雄照片区
