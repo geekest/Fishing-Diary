@@ -20,20 +20,20 @@
 		60F67593FEBA995EC8373510 /* MinimalCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D77054B3DAFFCEA35142FCB2 /* MinimalCardView.swift */; };
 		6E2F8371EF8C4AD5A08CDAC6 /* EnvDataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DD8F190708A4DF4DFB73028 /* EnvDataView.swift */; };
 		830251BCC9BC40199A68E437 /* RecordSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F6D1071151B99EA1A33955 /* RecordSession.swift */; };
+		AA11223344556677889900AA /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00112233445566778899AA /* Theme.swift */; };
 		AC500F8D35991EACEFF015C5 /* FishingDiaryApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56A8ADF9E995E1A2992272 /* FishingDiaryApp.swift */; };
 		AE4097A3DC6B812950B643A7 /* FishingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5340C3DD71872FF8BE1ACF39 /* FishingSession.swift */; };
 		B846D61DAC4AD72D9BF35B0C /* FishFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B9134171459010DDE787CB5 /* FishFormView.swift */; };
+		BB11223344556677889900BB /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00112233445566778899BB /* Components.swift */; };
 		BF2B9653F22E6BB20E494752 /* ShareElementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A226933FB6B5E5DFCD5C8A4B /* ShareElementsView.swift */; };
 		C6FDB3B43A6862AF7B47A605 /* CutoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472FD41984CF4EC92685A0BA /* CutoutView.swift */; };
+		CC11223344556677889900CC /* CatchCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC00112233445566778899CC /* CatchCard.swift */; };
 		CF1E7D71ADD57514EC258618 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2CB67B0C8B0CB4DF30E8C46 /* CameraView.swift */; };
+		DD11223344556677889900DD /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00112233445566778899DD /* OnboardingView.swift */; };
 		E7CC8CA0F3CC8B7ECAEA5A3F /* PreviewExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A25EB009CBDD38A36B723B4 /* PreviewExportView.swift */; };
+		EE11223344556677889900EE /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE00112233445566778899EE /* SessionDetailView.swift */; };
 		F0AF4AB708D26FA800921EBE /* DiaryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69FF9A5AE9FD9F4DC5522905 /* DiaryListView.swift */; };
 		F84768B54C383C877D9FAC49 /* WeatherSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA1686CDCB5523B6E6A79E03 /* WeatherSnapshot.swift */; };
-		AA11223344556677889900AA /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00112233445566778899AA /* Theme.swift */; };
-		BB11223344556677889900BB /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00112233445566778899BB /* Components.swift */; };
-		CC11223344556677889900CC /* CatchCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC00112233445566778899CC /* CatchCard.swift */; };
-		DD11223344556677889900DD /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00112233445566778899DD /* OnboardingView.swift */; };
-		EE11223344556677889900EE /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE00112233445566778899EE /* SessionDetailView.swift */; };
 		FF11223344556677889900FF /* SpeciesPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00112233445566778899FF /* SpeciesPickerSheet.swift */; };
 /* End PBXBuildFile section */
 
@@ -48,25 +48,25 @@
 		69FF9A5AE9FD9F4DC5522905 /* DiaryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryListView.swift; sourceTree = "<group>"; };
 		6A25EB009CBDD38A36B723B4 /* PreviewExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewExportView.swift; sourceTree = "<group>"; };
 		6D2D497781D3CB392542E4FC /* WeatherService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherService.swift; sourceTree = "<group>"; };
-		72779A0EB428410BE54F53BD /* FishingDiary.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FishingDiary.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		72779A0EB428410BE54F53BD /* FishingDiary.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FishingDiary.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1F6D1071151B99EA1A33955 /* RecordSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordSession.swift; sourceTree = "<group>"; };
 		A226933FB6B5E5DFCD5C8A4B /* ShareElementsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareElementsView.swift; sourceTree = "<group>"; };
+		AA00112233445566778899AA /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		B6A126B888B00DA90D65E6EC /* ShareStyleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareStyleView.swift; sourceTree = "<group>"; };
+		BB00112233445566778899BB /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		C013987E6E317AD66C67B0FC /* ImageRenderService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageRenderService.swift; sourceTree = "<group>"; };
 		C144EF83B989D9AB21A59343 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		CC00112233445566778899CC /* CatchCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatchCard.swift; sourceTree = "<group>"; };
 		CE56A8ADF9E995E1A2992272 /* FishingDiaryApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FishingDiaryApp.swift; sourceTree = "<group>"; };
 		D4B601C2D87F0C0B937A18E3 /* PurchaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseService.swift; sourceTree = "<group>"; };
 		D77054B3DAFFCEA35142FCB2 /* MinimalCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimalCardView.swift; sourceTree = "<group>"; };
+		DD00112233445566778899DD /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		E215E76EF0CC6902FB34E73D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		EA1686CDCB5523B6E6A79E03 /* WeatherSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherSnapshot.swift; sourceTree = "<group>"; };
+		EE00112233445566778899EE /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
 		EFE7265F0DE542B8290C31AC /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		F2CB67B0C8B0CB4DF30E8C46 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
 		FA3B910DB497C40957A373C0 /* FishCatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FishCatch.swift; sourceTree = "<group>"; };
-		AA00112233445566778899AA /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
-		BB00112233445566778899BB /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
-		CC00112233445566778899CC /* CatchCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatchCard.swift; sourceTree = "<group>"; };
-		DD00112233445566778899DD /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
-		EE00112233445566778899EE /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
 		FF00112233445566778899FF /* SpeciesPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeciesPickerSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -92,14 +92,6 @@
 				CA4BC204ADBBFE8E686EE062 /* Share */,
 			);
 			path = Views;
-			sourceTree = "<group>";
-		};
-		BBBBCCDDEEFF001122334455 /* Onboarding */ = {
-			isa = PBXGroup;
-			children = (
-				DD00112233445566778899DD /* OnboardingView.swift */,
-			);
-			path = Onboarding;
 			sourceTree = "<group>";
 		};
 		19F00E19B2DC6A211A9A3C13 /* Record */ = {
@@ -159,6 +151,16 @@
 			path = Profile;
 			sourceTree = "<group>";
 		};
+		AABBCCDDEEFF001122334455 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				AA00112233445566778899AA /* Theme.swift */,
+				BB00112233445566778899BB /* Components.swift */,
+				CC00112233445566778899CC /* CatchCard.swift */,
+			);
+			path = Common;
+			sourceTree = "<group>";
+		};
 		AE4FF93B917314FC6FB89780 /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -167,6 +169,14 @@
 				6D2D497781D3CB392542E4FC /* WeatherService.swift */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		BBBBCCDDEEFF001122334455 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				DD00112233445566778899DD /* OnboardingView.swift */,
+			);
+			path = Onboarding;
 			sourceTree = "<group>";
 		};
 		C68CC4F67E5014F0FCA3DF5E /* Models */ = {
@@ -205,16 +215,6 @@
 				D77054B3DAFFCEA35142FCB2 /* MinimalCardView.swift */,
 			);
 			path = Templates;
-			sourceTree = "<group>";
-		};
-		AABBCCDDEEFF001122334455 /* Common */ = {
-			isa = PBXGroup;
-			children = (
-				AA00112233445566778899AA /* Theme.swift */,
-				BB00112233445566778899BB /* Components.swift */,
-				CC00112233445566778899CC /* CatchCard.swift */,
-			);
-			path = Common;
 			sourceTree = "<group>";
 		};
 		F1ACA5879DE1DDE3BCC27F22 /* FishingDiary */ = {
@@ -263,7 +263,6 @@
 				LastUpgradeCheck = 1500;
 				TargetAttributes = {
 					D08C5CFA8CC3FAB6DF08BCAF = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -344,6 +343,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 45Q48VG3DF;
 				INFOPLIST_FILE = FishingDiary/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -361,6 +361,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 45Q48VG3DF;
 				INFOPLIST_FILE = FishingDiary/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

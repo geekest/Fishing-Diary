@@ -381,8 +381,8 @@ final class CameraManager: NSObject, ObservableObject {
         sessionQueue.async { [weak self] in
             guard let self else { return }
             if let connection = self.photoOutput.connection(with: .video),
-               connection.isVideoOrientationSupported {
-                connection.videoOrientation = .portrait
+               connection.isVideoRotationAngleSupported(90) {
+                connection.videoRotationAngle = 90   // 竖屏
             }
             self.photoOutput.capturePhoto(with: AVCapturePhotoSettings(), delegate: self)
         }
@@ -421,8 +421,9 @@ struct CameraPreviewLayerView: UIViewRepresentable {
         view.backgroundColor = .black
         view.videoPreviewLayer.session = session
         view.videoPreviewLayer.videoGravity = .resizeAspectFill
-        if view.videoPreviewLayer.connection?.isVideoOrientationSupported == true {
-            view.videoPreviewLayer.connection?.videoOrientation = .portrait
+        if let connection = view.videoPreviewLayer.connection,
+           connection.isVideoRotationAngleSupported(90) {
+            connection.videoRotationAngle = 90   // 竖屏
         }
         return view
     }

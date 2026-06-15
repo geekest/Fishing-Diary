@@ -38,6 +38,7 @@ targets:
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+        UIRequiresFullScreen: true
         UILaunchScreen:
           UIColorName: AccentColor
         NSLocationWhenInUseUsageDescription: "用于自动记录钓点位置和获取当地天气数据"

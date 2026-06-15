@@ -224,10 +224,8 @@ struct SessionDetailView: View {
     /// 地图卡片（点击进入全屏地图）
     private func mapCard(_ coord: CLLocationCoordinate2D) -> some View {
         ZStack(alignment: .bottomLeading) {
-            Map(coordinateRegion: .constant(SpotPin.region(for: coord)),
-                interactionModes: [],
-                annotationItems: [SpotPin(coordinate: coord)]) { pin in
-                MapAnnotation(coordinate: pin.coordinate) {
+            Map(initialPosition: .region(SpotMap.region(for: coord)), interactionModes: []) {
+                Annotation("", coordinate: coord) {
                     SpotMarkerView()
                 }
             }
@@ -733,11 +731,8 @@ struct EditSessionSheet: View {
     }
 }
 
-// MARK: - 地图标注模型 + 醒目标记
-private struct SpotPin: Identifiable {
-    let id = UUID()
-    let coordinate: CLLocationCoordinate2D
-
+// MARK: - 地图区域 + 醒目标记
+private enum SpotMap {
     static func region(for coord: CLLocationCoordinate2D) -> MKCoordinateRegion {
         MKCoordinateRegion(center: coord,
                            span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02))
@@ -764,20 +759,19 @@ struct MapDetailView: View {
     let coordinate: CLLocationCoordinate2D
     let name: String
     @Environment(\.dismiss) private var dismiss
-    @State private var region: MKCoordinateRegion
+    @State private var position: MapCameraPosition
 
     init(coordinate: CLLocationCoordinate2D, name: String) {
         self.coordinate = coordinate
         self.name = name
-        _region = State(initialValue: SpotPin.region(for: coordinate))
+        _position = State(initialValue: .region(SpotMap.region(for: coordinate)))
     }
 
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                Map(coordinateRegion: $region,
-                    annotationItems: [SpotPin(coordinate: coordinate)]) { pin in
-                    MapAnnotation(coordinate: pin.coordinate) {
+                Map(position: $position) {
+                    Annotation("", coordinate: coordinate) {
                         SpotMarkerView()
                     }
                 }
