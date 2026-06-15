@@ -4,16 +4,21 @@ import SwiftData
 // MARK: - 渔获详情页
 struct SessionDetailView: View {
     let session: FishingSession
+    @State private var selectedCatch: FishCatch?
     @State private var navigateToShare = false
     @State private var showEditSheet = false
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
+    init(session: FishingSession, selectedCatch: FishCatch? = nil) {
+        self.session = session
+        let initial = selectedCatch ?? session.catches.sorted { $0.sortIndex < $1.sortIndex }.first
+        _selectedCatch = State(initialValue: initial)
+    }
+
     private var sortedCatches: [FishCatch] {
         session.catches.sorted { $0.sortIndex < $1.sortIndex }
     }
-
-    private var primaryCatch: FishCatch? { sortedCatches.first }
 
     private var dateText: String {
         let fmt = DateFormatter()
@@ -62,16 +67,16 @@ struct SessionDetailView: View {
             ShareStyleView(session: session, isRecordPresented: .constant(false))
         }
         .sheet(isPresented: $showEditSheet) {
-            EditSessionSheet(session: session)
+            EditSessionSheet(session: session, fishCatch: selectedCatch)
         }
     }
 
     // MARK: - 英雄照片区
     private var heroSection: some View {
         ZStack(alignment: .bottomLeading) {
-            // 背景图
+            // 背景图（当前选中的鱼）
             Group {
-                if let data = session.coverImageData, let img = UIImage(data: data) {
+                if let c = selectedCatch, let img = UIImage(data: c.cutoutImageData) {
                     Image(uiImage: img)
                         .resizable()
                         .scaledToFill()
@@ -92,7 +97,7 @@ struct SessionDetailView: View {
 
             // 体长大数字 + 鱼种
             VStack(alignment: .leading, spacing: 4) {
-                if let len = primaryCatch?.lengthCm {
+                if let len = selectedCatch?.lengthCm {
                     HStack(alignment: .lastTextBaseline, spacing: 4) {
                         Text("\(Int(len))")
                             .font(Theme.Font.displayNumber)
@@ -103,7 +108,7 @@ struct SessionDetailView: View {
                     }
                 }
 
-                if let species = primaryCatch?.speciesName, !species.isEmpty {
+                if let species = selectedCatch?.speciesName, !species.isEmpty {
                     Text(species)
                         .font(Theme.Font.title)
                         .fontWeight(.bold)
@@ -111,7 +116,7 @@ struct SessionDetailView: View {
                 }
 
                 // 学名（可扩展为真实数据）
-                let latinName = latinName(for: primaryCatch?.speciesName ?? "")
+                let latinName = latinName(for: selectedCatch?.speciesName ?? "")
                 if !latinName.isEmpty {
                     Text(latinName)
                         .font(Theme.Font.microLabel)
@@ -223,20 +228,27 @@ struct SessionDetailView: View {
         }
     }
 
-    // MARK: - 渔获列表
+    // MARK: - 渔获列表（本次出钓的全部鱼，可点选切换）
     private var catchesSection: some View {
         VStack(alignment: .leading, spacing: Theme.Space.md) {
-            SectionLabel(text: "渔获记录 · \(sortedCatches.count) 尾")
+            SectionLabel(text: "本次出钓 · \(sortedCatches.count) 尾")
 
             VStack(spacing: Theme.Space.sm) {
                 ForEach(sortedCatches) { catch_ in
-                    catchRow(catch_)
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            selectedCatch = catch_
+                        }
+                    } label: {
+                        catchRow(catch_, isSelected: selectedCatch?.id == catch_.id)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }
     }
 
-    private func catchRow(_ fishCatch: FishCatch) -> some View {
+    private func catchRow(_ fishCatch: FishCatch, isSelected: Bool) -> some View {
         HStack(spacing: Theme.Space.md) {
             // 抠图
             Group {
@@ -278,10 +290,24 @@ struct SessionDetailView: View {
             }
 
             Spacer()
+
+            if isSelected {
+                Text("查看中")
+                    .font(Theme.Font.microLabel)
+                    .foregroundStyle(Theme.Colors.accent)
+            } else {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Theme.Colors.ink3)
+            }
         }
         .padding(Theme.Space.md)
-        .background(Theme.Colors.surface)
+        .background(isSelected ? Theme.Colors.accentSoft : Theme.Colors.surface)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.field))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.field)
+                .stroke(isSelected ? Theme.Colors.accent : Color.clear, lineWidth: 1.5)
+        )
         .shadowSoft()
     }
 
@@ -318,6 +344,7 @@ struct SessionDetailView: View {
 // MARK: - 编辑 Sheet
 struct EditSessionSheet: View {
     let session: FishingSession
+    let fishCatch: FishCatch?
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
@@ -329,7 +356,10 @@ struct EditSessionSheet: View {
 
     private enum EditField { case length, weight, notes }
 
-    private var firstCatch: FishCatch? { session.catches.min(by: { $0.sortIndex < $1.sortIndex }) }
+    /// 待编辑的鱼（详情页当前选中的那尾，回退到第一尾）
+    private var editingCatch: FishCatch? {
+        fishCatch ?? session.catches.min(by: { $0.sortIndex < $1.sortIndex })
+    }
 
     var body: some View {
         NavigationStack {
@@ -360,9 +390,9 @@ struct EditSessionSheet: View {
             }
         }
         .onAppear {
-            speciesName = firstCatch?.speciesName ?? ""
-            lengthCm = firstCatch?.lengthCm.map { "\(Int($0))" } ?? ""
-            weightKg = firstCatch?.weightKg.map { String(format: "%.2f", $0) } ?? ""
+            speciesName = editingCatch?.speciesName ?? ""
+            lengthCm = editingCatch?.lengthCm.map { "\(Int($0))" } ?? ""
+            weightKg = editingCatch?.weightKg.map { String(format: "%.2f", $0) } ?? ""
             notes = session.notes ?? ""
         }
     }
@@ -438,7 +468,7 @@ struct EditSessionSheet: View {
     }
 
     private func save() {
-        if let catch_ = firstCatch {
+        if let catch_ = editingCatch {
             catch_.speciesName = speciesName.isEmpty ? catch_.speciesName : speciesName
             catch_.lengthCm = Double(lengthCm)
             catch_.weightKg = Double(weightKg)

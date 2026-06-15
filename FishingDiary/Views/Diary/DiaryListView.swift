@@ -12,15 +12,30 @@ struct DiaryListView: View {
         Array(Set(sessions.flatMap { $0.speciesNames }.filter { !$0.isEmpty })).sorted()
     }
 
-    private var filteredSessions: [FishingSession] {
-        guard let species = filterSpecies else { return sessions }
-        return sessions.filter { $0.speciesNames.contains(species) }
+    /// 时间线展示单元：一尾鱼 + 其所属的出钓
+    private struct CatchEntry: Identifiable {
+        let session: FishingSession
+        let fish: FishCatch
+        var id: UUID { fish.id }
     }
 
-    private var grouped: [(String, [FishingSession])] {
+    /// 把所有出钓展开成「每尾鱼」一条，按出钓时间倒序、同次内按记录顺序
+    private var displayEntries: [CatchEntry] {
+        var entries: [CatchEntry] = []
+        for session in sessions {
+            let catches = session.catches.sorted { $0.sortIndex < $1.sortIndex }
+            for fish in catches {
+                if let species = filterSpecies, fish.speciesName != species { continue }
+                entries.append(CatchEntry(session: session, fish: fish))
+            }
+        }
+        return entries
+    }
+
+    private var grouped: [(String, [CatchEntry])] {
         let fmt = DateFormatter()
         fmt.dateFormat = "yyyy年MM月"
-        let dict = Dictionary(grouping: filteredSessions) { fmt.string(from: $0.date) }
+        let dict = Dictionary(grouping: displayEntries) { fmt.string(from: $0.session.date) }
         return dict.sorted { $0.key > $1.key }
     }
 
@@ -109,15 +124,15 @@ struct DiaryListView: View {
     }
 
     // MARK: - 月份 Section
-    private func monthSection(month: String, items: [FishingSession]) -> some View {
+    private func monthSection(month: String, items: [CatchEntry]) -> some View {
         VStack(alignment: .leading, spacing: Theme.Space.sm) {
-            SectionLabel(text: "\(month) · \(items.count) 次")
+            SectionLabel(text: "\(month) · \(items.count) 尾")
                 .padding(.top, Theme.Space.xl)
                 .padding(.bottom, Theme.Space.xs)
 
-            ForEach(items) { session in
-                NavigationLink(destination: SessionDetailView(session: session)) {
-                    CatchCard(session: session)
+            ForEach(items) { entry in
+                NavigationLink(destination: SessionDetailView(session: entry.session, selectedCatch: entry.fish)) {
+                    CatchCard(session: entry.session, fishCatch: entry.fish)
                 }
                 .buttonStyle(.plain)
                 .padding(.bottom, Theme.Space.md)
