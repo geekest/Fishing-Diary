@@ -66,7 +66,7 @@ struct PreviewExportView: View {
                 .presentationDragIndicator(.hidden)
                 .presentationCornerRadius(Theme.Radius.sheet)
         }
-        .onChange(of: purchaseService.isPurchased) { newValue in
+        .onChange(of: purchaseService.isPurchased) { _, newValue in
             if newValue {
                 showPaywall = false
                 exportImage()

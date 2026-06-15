@@ -2,7 +2,7 @@ name: FishingDiary
 options:
   bundleIdPrefix: com.placeholder
   deploymentTarget:
-    iOS: "16.0"
+    iOS: "18.0"
   xcodeVersion: "15"
   generateEmptyDirectories: true
 

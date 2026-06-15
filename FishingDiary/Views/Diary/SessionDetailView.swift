@@ -483,7 +483,7 @@ struct EditSessionSheet: View {
         }
         .onAppear(perform: populate)
         .photosPicker(isPresented: $showPicker, selection: $pickerItem, matching: .images)
-        .onChange(of: pickerItem) { item in
+        .onChange(of: pickerItem) { _, item in
             guard let item else { return }
             loadReplacement(item)
         }
