@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 分享第 1 步：选画幅 + 风格模板
+// MARK: - 出图第 1 步：选画幅 + 风格
 struct ShareStyleView: View {
     let session: FishingSession
     @Binding var isRecordPresented: Bool
@@ -42,76 +42,125 @@ struct ShareStyleView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                // 画幅选择
-                ratioSection
+        ZStack {
+            Theme.Colors.bg.ignoresSafeArea()
 
-                // 风格模板
-                styleSection
+            ScrollView {
+                VStack(alignment: .leading, spacing: Theme.Space.xl) {
+                    // 实时预览卡
+                    livePreviewSection
+
+                    // 画幅选择
+                    ratioSection
+
+                    // 风格模板
+                    styleSection
+                }
+                .padding(.horizontal, Theme.Space.lg)
+                .padding(.vertical, Theme.Space.md)
+                .padding(.bottom, 80)
             }
-            .padding()
         }
         .navigationTitle("选尺寸 · 风格")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Text("1/2").font(.caption).foregroundStyle(.secondary)
+                HStack(spacing: 6) {
+                    Circle().fill(Theme.Colors.accent).frame(width: 6, height: 6)
+                    Circle().fill(Theme.Colors.ink3).frame(width: 6, height: 6)
+                }
             }
         }
         .safeAreaInset(edge: .bottom) {
-            Button {
+            PrimaryButton(title: "下一步 · 选展示元素") {
                 navigateToElements = true
-            } label: {
-                Text("下一步 · 选展示元素")
-                    .fontWeight(.semibold)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color.accentColor)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
             }
-            .padding(.horizontal)
+            .padding(.horizontal, Theme.Space.lg)
             .padding(.bottom, 8)
+            .background(Theme.Colors.bg)
         }
         .navigationDestination(isPresented: $navigateToElements) {
-            ShareElementsView(session: session, style: selectedStyle, isRecordPresented: $isRecordPresented)
+            ShareElementsView(session: session, style: selectedStyle, ratio: selectedRatio, isRecordPresented: $isRecordPresented)
         }
+    }
+
+    // MARK: - 实时预览卡
+    private var livePreviewSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.sm) {
+            HStack {
+                SectionLabel(text: "实时预览")
+                Spacer()
+                Text(selectedRatio.rawValue + " · " + selectedRatio.subtitle)
+                    .font(Theme.Font.microLabel)
+                    .foregroundStyle(Theme.Colors.accent)
+            }
+
+            HStack {
+                Spacer()
+                livePreviewCard
+                    .frame(height: 220)
+                    .animation(.easeInOut(duration: 0.28), value: selectedRatio)
+                    .animation(.easeInOut(duration: 0.28), value: selectedStyle)
+                Spacer()
+            }
+        }
+    }
+
+    private var livePreviewCard: some View {
+        MinimalCardView(session: session, visibleElements: ShareElementsConfig(), showWatermark: false, ratio: selectedRatio.aspectRatio)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .shadowCard()
     }
 
     // MARK: - 画幅选择
     private var ratioSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("画幅").font(.headline)
+        VStack(alignment: .leading, spacing: Theme.Space.md) {
+            SectionLabel(text: "画幅")
 
-            HStack(spacing: 12) {
+            HStack(spacing: Theme.Space.sm) {
                 ForEach(CardRatio.allCases) { ratio in
                     Button {
-                        if ratio.isAvailable { selectedRatio = ratio }
-                    } label: {
-                        VStack(spacing: 6) {
-                            // 比例方块
-                            let w: CGFloat = ratio == .nineByteen ? 22 : ratio == .threeByFour ? 26 : 30
-                            let h: CGFloat = ratio == .nineByteen ? 40 : ratio == .threeByFour ? 34 : 30
-                            RoundedRectangle(cornerRadius: 3)
-                                .stroke(selectedRatio == ratio ? Color.accentColor : Color(.systemGray4), lineWidth: 1.5)
-                                .frame(width: w, height: h)
-                            Text(ratio.rawValue).font(.caption2).fontWeight(.semibold)
-                            Text(ratio.subtitle).font(.caption2).foregroundStyle(.secondary)
+                        if ratio.isAvailable {
+                            withAnimation(.easeInOut(duration: 0.28)) {
+                                selectedRatio = ratio
+                            }
                         }
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 14)
+                    } label: {
+                        VStack(spacing: 8) {
+                            // 比例方块
+                            let baseSize: CGFloat = 44
+                            let w = ratio == .nineByteen ? baseSize * 9/16 : ratio == .threeByFour ? baseSize * 3/4 : baseSize
+                            let h: CGFloat = ratio == .nineByteen ? baseSize : ratio == .threeByFour ? baseSize : baseSize * 3/4
+
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(selectedRatio == ratio ? Theme.Colors.accentSoft : Theme.Colors.bg2)
+                                .frame(width: w, height: h)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 3)
+                                        .stroke(selectedRatio == ratio ? Theme.Colors.accent : Theme.Colors.hairline, lineWidth: 1.5)
+                                )
+
+                            Text(ratio.rawValue)
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(selectedRatio == ratio ? Theme.Colors.accent : Theme.Colors.ink)
+                            Text(ratio.subtitle)
+                                .font(Theme.Font.caption)
+                                .foregroundStyle(Theme.Colors.ink2)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
                         .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(selectedRatio == ratio ? Color.accentColor.opacity(0.1) : Color(.systemGray6))
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(selectedRatio == ratio ? Theme.Colors.accentSoft : Theme.Colors.surface)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(selectedRatio == ratio ? Theme.Colors.accent : Theme.Colors.hairline, lineWidth: 1.5)
+                                )
                         )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(selectedRatio == ratio ? Color.accentColor : .clear, lineWidth: 1)
-                        )
-                        .opacity(ratio.isAvailable ? 1 : 0.4)
+                        .opacity(ratio.isAvailable ? 1 : 0.45)
                     }
                     .disabled(!ratio.isAvailable)
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -119,94 +168,92 @@ struct ShareStyleView: View {
 
     // MARK: - 风格模板
     private var styleSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("风格模板").font(.headline)
+        VStack(alignment: .leading, spacing: Theme.Space.md) {
+            SectionLabel(text: "风格模板")
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Space.md) {
                 ForEach(CardStyle.allCases) { style in
                     Button {
-                        if style.isFree { selectedStyle = style }
+                        if style.isFree {
+                            withAnimation(.easeInOut(duration: 0.28)) { selectedStyle = style }
+                        }
                     } label: {
                         VStack(spacing: 0) {
-                            // 预览缩略图
-                            styleThumbnail(for: style)
-                                .frame(height: 120)
-                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                                .overlay(alignment: .topTrailing) {
-                                    Text(style.badge)
-                                        .font(.system(size: 9, weight: .bold, design: .monospaced))
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 3)
-                                        .background(style.isFree ? Color.accentColor : Color(.systemGray3))
-                                        .foregroundStyle(style.isFree ? .white : .primary)
-                                        .clipShape(Capsule())
-                                        .padding(6)
+                            // 缩略图
+                            ZStack(alignment: .topTrailing) {
+                                styleThumbnail(for: style)
+                                    .frame(height: 110)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(selectedStyle == style ? Theme.Colors.accent : Color.clear, lineWidth: 2)
+                                    )
+
+                                // FREE / PRO 标签
+                                Text(style.badge)
+                                    .font(Theme.Font.microLabel)
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 7)
+                                    .padding(.vertical, 3)
+                                    .background(style.isFree ? Theme.Colors.accent : Theme.Colors.ink3)
+                                    .clipShape(Capsule())
+                                    .padding(7)
+
+                                // PRO 锁图标
+                                if !style.isFree {
+                                    Image(systemName: "lock.fill")
+                                        .font(.system(size: 16))
+                                        .foregroundStyle(.white.opacity(0.8))
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        .background(.black.opacity(0.35))
+                                        .clipShape(RoundedRectangle(cornerRadius: 10))
                                 }
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(selectedStyle == style ? Color.accentColor : .clear, lineWidth: 2)
-                                )
+                            }
 
                             Text(style.rawValue)
-                                .font(.caption)
+                                .font(Theme.Font.caption)
                                 .fontWeight(.medium)
-                                .padding(.top, 8)
+                                .foregroundStyle(Theme.Colors.ink)
+                                .padding(.top, Theme.Space.sm)
+                                .padding(.bottom, Theme.Space.xs)
                         }
                         .opacity(style.isFree ? 1 : 0.6)
                     }
                     .disabled(!style.isFree)
+                    .buttonStyle(.plain)
                 }
             }
         }
     }
 
-    // MARK: - 风格预览缩略图
     @ViewBuilder
     private func styleThumbnail(for style: CardStyle) -> some View {
         switch style {
         case .minimal:
+            MinimalCardView(session: session, visibleElements: ShareElementsConfig(), showWatermark: false)
+        case .tech:
             ZStack(alignment: .bottomLeading) {
-                Color(red: 0.05, green: 0.18, blue: 0.1)
-                LinearGradient(colors: [.clear, .black.opacity(0.5)], startPoint: .top, endPoint: .bottom)
+                LinearGradient(colors: [Color(hex: "0A0F1C"), Color(hex: "1A3050")],
+                               startPoint: .topLeading, endPoint: .bottomTrailing)
+                LinearGradient(colors: [.clear, .black.opacity(0.5)], startPoint: .center, endPoint: .bottom)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("LOG").font(.system(size: 8, design: .monospaced)).foregroundStyle(.white.opacity(0.5))
-                    Text("38cm").font(.system(size: 22, weight: .bold)).foregroundStyle(.white)
-                    Divider().overlay(.white.opacity(0.3))
+                    Text("FISHING DATA").font(Theme.Font.microLabel).foregroundStyle(Color(hex: "00E5FF").opacity(0.8))
                 }
                 .padding(10)
             }
-        case .tech:
-            ZStack {
-                LinearGradient(colors: [Color(red: 0.05, green: 0.05, blue: 0.15), Color(red: 0.1, green: 0.2, blue: 0.3)],
-                               startPoint: .topLeading, endPoint: .bottomTrailing)
-                Grid(horizontalSpacing: 1, verticalSpacing: 1) {
-                    ForEach(0..<4, id: \.self) { _ in
-                        GridRow {
-                            ForEach(0..<6, id: \.self) { _ in
-                                Rectangle().fill(.cyan.opacity(0.08))
-                            }
-                        }
-                    }
-                }
-                Text("FISHING\nDATA").font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.cyan.opacity(0.8)).multilineTextAlignment(.center)
-            }
         case .sticker:
-            ZStack {
-                Color(red: 0.92, green: 0.88, blue: 0.82)
-                Image(systemName: "fish.fill")
-                    .font(.system(size: 30)).foregroundStyle(.green.opacity(0.6))
-                    .offset(x: -20, y: 10)
-                Image(systemName: "fish.fill")
-                    .font(.system(size: 20)).foregroundStyle(.blue.opacity(0.5))
-                    .offset(x: 25, y: -15)
+            ZStack(alignment: .bottomLeading) {
+                Color(hex: "EDE5CE")
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("今日战果").font(.system(size: 12)).foregroundStyle(Color(hex: "3C3422"))
+                    Image(systemName: "fish.fill").font(.system(size: 30)).foregroundStyle(Theme.Colors.accent.opacity(0.7)).offset(x: -8, y: 4)
+                }
+                .padding(10)
             }
         case .film:
             ZStack {
-                Color(red: 0.82, green: 0.76, blue: 0.64)
-                RoundedRectangle(cornerRadius: 2)
-                    .stroke(.white, lineWidth: 6)
-                    .padding(10)
+                Color(hex: "D4C9A8")
+                RoundedRectangle(cornerRadius: 2).stroke(.white, lineWidth: 5).padding(6)
             }
         }
     }

@@ -1,192 +1,126 @@
 import SwiftUI
 import SwiftData
 
-/// 日记时间线（主页）
+// MARK: - 日记时间线（主页）
 struct DiaryListView: View {
     @Query(sort: \FishingSession.date, order: .reverse)
     private var sessions: [FishingSession]
 
-    /// 按日期（年-月）分组
+    @State private var filterSpecies: String? = nil
+
+    private var allSpecies: [String] {
+        Array(Set(sessions.flatMap { $0.speciesNames }.filter { !$0.isEmpty })).sorted()
+    }
+
+    private var filteredSessions: [FishingSession] {
+        guard let species = filterSpecies else { return sessions }
+        return sessions.filter { $0.speciesNames.contains(species) }
+    }
+
     private var grouped: [(String, [FishingSession])] {
         let fmt = DateFormatter()
         fmt.dateFormat = "yyyy年MM月"
-        let dict = Dictionary(grouping: sessions) { fmt.string(from: $0.date) }
+        let dict = Dictionary(grouping: filteredSessions) { fmt.string(from: $0.date) }
         return dict.sorted { $0.key > $1.key }
     }
 
     var body: some View {
-        Group {
+        ZStack {
+            Theme.Colors.bg.ignoresSafeArea()
+
             if sessions.isEmpty {
                 emptyState
             } else {
-                list
+                listContent
             }
         }
         .navigationTitle("钓鱼日记")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Text("2026 ▾")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                Button {
+                    // TODO: 年份筛选
+                } label: {
+                    Text("2026 ▾")
+                        .font(Theme.Font.subhead)
+                        .foregroundStyle(Theme.Colors.ink2)
+                }
             }
         }
     }
 
     // MARK: - 空态
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "fish")
-                .font(.system(size: 60))
-                .foregroundStyle(.tertiary)
-            Text("点右下「记录」\n开始今天的渔获")
-                .font(.body)
+        VStack(spacing: Theme.Space.lg) {
+            Text("🎣")
+                .font(.system(size: 64))
+                .opacity(0.4)
+
+            Text("还没有渔获记录")
+                .font(Theme.Font.headline)
+                .foregroundStyle(Theme.Colors.ink)
+
+            Text("出竿第一天，先把今天的渔获记下来吧。\n记录永远免费。")
+                .font(Theme.Font.body)
+                .foregroundStyle(Theme.Colors.ink2)
                 .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
+                .lineSpacing(3)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
     }
 
-    // MARK: - 日记列表
-    private var list: some View {
-        List {
-            ForEach(grouped, id: \.0) { month, items in
-                Section(header: Text(month).font(.footnote).foregroundStyle(.secondary)) {
-                    ForEach(items) { session in
-                        NavigationLink(destination: SessionDetailView(session: session)) {
-                            SessionRowView(session: session)
-                        }
-                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                    }
-                }
-            }
-        }
-        .listStyle(.plain)
-    }
-}
-
-// MARK: - 日记行
-private struct SessionRowView: View {
-    let session: FishingSession
-
-    private var dateText: String {
-        let fmt = DateFormatter()
-        fmt.dateFormat = "MM.dd"
-        return fmt.string(from: session.date)
-    }
-
-    var body: some View {
-        HStack(spacing: 12) {
-            // 封面图
-            Group {
-                if let data = session.coverImageData,
-                   let img = UIImage(data: data) {
-                    Image(uiImage: img)
-                        .resizable()
-                        .scaledToFill()
-                } else {
-                    Rectangle()
-                        .fill(Color(.systemGray5))
-                        .overlay {
-                            Image(systemName: "fish")
-                                .foregroundStyle(.tertiary)
-                        }
-                }
-            }
-            .frame(width: 64, height: 64)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-
-            // 文字信息
-            VStack(alignment: .leading, spacing: 4) {
-                Text("\(dateText) · \(session.locationName.isEmpty ? "未知钓点" : session.locationName)")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.primary)
-
-                Text(session.speciesNames.joined(separator: " · "))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-
-            Spacer()
-
-            // 渔获数量
-            Text("×\(session.totalCatch)")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.accentColor.opacity(0.1))
-                .foregroundStyle(Color.accentColor)
-                .clipShape(Capsule())
-        }
-    }
-}
-
-// MARK: - 出钓详情（占位）
-struct SessionDetailView: View {
-    let session: FishingSession
-
-    var body: some View {
+    // MARK: - 列表内容
+    private var listContent: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                // 封面图
-                if let data = session.coverImageData, let img = UIImage(data: data) {
-                    Image(uiImage: img)
-                        .resizable()
-                        .scaledToFit()
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
+            // 筛选 chip 行
+            if !allSpecies.isEmpty {
+                filterChips
+                    .padding(.horizontal, Theme.Space.lg)
+                    .padding(.top, Theme.Space.sm)
+                    .padding(.bottom, Theme.Space.xs)
+            }
 
-                // 基本信息
-                VStack(alignment: .leading, spacing: 8) {
-                    Label(session.locationName.isEmpty ? "未知钓点" : session.locationName,
-                          systemImage: "mappin.circle.fill")
-                    Label("\(session.totalCatch) 尾渔获", systemImage: "fish.fill")
-                    if let w = session.weather {
-                        Label("\(w.condition) · \(Int(w.temperature))°C", systemImage: "cloud.fill")
+            // 月份分组列表
+            LazyVStack(alignment: .leading, spacing: 0, pinnedViews: []) {
+                ForEach(grouped, id: \.0) { month, items in
+                    monthSection(month: month, items: items)
+                }
+            }
+            .padding(.horizontal, Theme.Space.lg)
+            .padding(.bottom, 100) // 给 tab bar 留空间
+        }
+    }
+
+    // MARK: - 筛选 Chip 行
+    private var filterChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: Theme.Space.sm) {
+                ChipButton(title: "全部", isSelected: filterSpecies == nil) {
+                    filterSpecies = nil
+                }
+                ForEach(allSpecies, id: \.self) { species in
+                    ChipButton(title: species, isSelected: filterSpecies == species) {
+                        filterSpecies = filterSpecies == species ? nil : species
                     }
                 }
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-
-                Divider()
-
-                // 渔获列表
-                ForEach(session.catches.sorted(by: { $0.sortIndex < $1.sortIndex })) { catch_ in
-                    FishCatchRow(fishCatch: catch_)
-                }
             }
-            .padding()
         }
-        .navigationTitle(session.locationName.isEmpty ? "出钓记录" : session.locationName)
-        .navigationBarTitleDisplayMode(.inline)
     }
-}
 
-private struct FishCatchRow: View {
-    let fishCatch: FishCatch
+    // MARK: - 月份 Section
+    private func monthSection(month: String, items: [FishingSession]) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Space.sm) {
+            SectionLabel(text: "\(month) · \(items.count) 次")
+                .padding(.top, Theme.Space.xl)
+                .padding(.bottom, Theme.Space.xs)
 
-    var body: some View {
-        HStack(spacing: 12) {
-            if let img = UIImage(data: fishCatch.cutoutImageData) {
-                Image(uiImage: img)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 60)
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                Text(fishCatch.speciesName.isEmpty ? "未填鱼种" : fishCatch.speciesName)
-                    .font(.subheadline).fontWeight(.medium)
-                if let len = fishCatch.lengthCm {
-                    Text("\(Int(len)) cm")
-                        .font(.caption).foregroundStyle(.secondary)
+            ForEach(items) { session in
+                NavigationLink(destination: SessionDetailView(session: session)) {
+                    CatchCard(session: session)
                 }
-                if let kg = fishCatch.weightKg {
-                    Text(String(format: "%.2f kg", kg))
-                        .font(.caption).foregroundStyle(.secondary)
-                }
+                .buttonStyle(.plain)
+                .padding(.bottom, Theme.Space.md)
             }
         }
     }

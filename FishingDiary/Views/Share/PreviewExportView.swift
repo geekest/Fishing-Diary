@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 出图预览 + 付费墙
+// MARK: - 出图预览 + 付费墙
 struct PreviewExportView: View {
     let session: FishingSession
     let config: ShareElementsConfig
@@ -11,6 +11,9 @@ struct PreviewExportView: View {
     @State private var showShareSheet = false
     @State private var renderedImage: UIImage? = nil
     @State private var showSuccessToast = false
+    @State private var selectedPlan: PurchasePlan = .unlock
+
+    enum PurchasePlan { case unlock, monthly }
 
     var body: some View {
         ZStack {
@@ -22,38 +25,33 @@ struct PreviewExportView: View {
             )
             .ignoresSafeArea()
 
-            // 顶部导航（透明覆盖）
+            // 顶部导航覆盖
             VStack {
                 HStack {
-                    // 返回按钮由 NavigationStack 提供
                     Spacer()
                     if purchaseService.isPurchased {
                         Button {
                             exportImage()
                         } label: {
                             Image(systemName: "square.and.arrow.up")
-                                .font(.title3)
+                                .font(.title3.weight(.semibold))
                                 .foregroundStyle(.white)
                                 .padding(10)
-                                .background(.ultraThinMaterial, in: Circle())
+                                .background(.black.opacity(0.35))
+                                .clipShape(Circle())
                         }
-                        .padding(.trailing)
+                        .padding(.trailing, Theme.Space.lg)
                     }
                 }
                 .padding(.top, 8)
                 Spacer()
             }
 
-            // 付费成功 Toast
+            // Toast
             if showSuccessToast {
                 VStack {
                     Spacer()
-                    Text("高清图已存入相册 ✓")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
-                        .background(.ultraThinMaterial, in: Capsule())
+                    ToastView(message: "高清图已存入相册 ✓")
                         .padding(.bottom, showPaywall ? 380 : 100)
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -65,10 +63,11 @@ struct PreviewExportView: View {
         .sheet(isPresented: $showPaywall) {
             paywallSheet
                 .presentationDetents([.medium])
-                .presentationDragIndicator(.visible)
+                .presentationDragIndicator(.hidden)
+                .presentationCornerRadius(Theme.Radius.sheet)
         }
-        .onChange(of: purchaseService.isPurchased) { _, isPurchased in
-            if isPurchased {
+        .onChange(of: purchaseService.isPurchased) { newValue in
+            if newValue {
                 showPaywall = false
                 exportImage()
             }
@@ -82,75 +81,143 @@ struct PreviewExportView: View {
 
     // MARK: - 付费墙 Sheet
     private var paywallSheet: some View {
-        VStack(spacing: 0) {
-            // 抓手
-            Capsule()
-                .fill(Color(.systemGray4))
-                .frame(width: 36, height: 5)
-                .padding(.top, 12)
+        ZStack {
+            Theme.Colors.surface.ignoresSafeArea()
 
-            VStack(spacing: 16) {
+            VStack(spacing: 0) {
+                // 抓手
+                Capsule()
+                    .fill(Theme.Colors.ink3)
+                    .frame(width: 36, height: 5)
+                    .padding(.top, 12)
+                    .padding(.bottom, Theme.Space.lg)
+
+                // 锁图标
+                Image(systemName: "lock.open.fill")
+                    .font(.system(size: 28))
+                    .foregroundStyle(Theme.Colors.gold)
+                    .padding(.bottom, Theme.Space.sm)
+
+                // 标题
                 Text("导出无水印高清图")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .padding(.top, 8)
+                    .font(Theme.Font.headline)
+                    .foregroundStyle(Theme.Colors.ink)
 
-                Text("解锁全部模板 · 1:1 / 3:4 / 9:16 任意导出")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Text("解锁全部模板 · 3 种画幅任意导出")
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Colors.ink2)
+                    .padding(.top, 4)
+                    .padding(.bottom, Theme.Space.lg)
 
-                // 买断方案
-                PlanRow(
-                    isSelected: true,
-                    flag: "最实惠 · 省 ¥40",
-                    title: "一次性买断",
-                    subtitle: "永久解锁 · 不限张数",
-                    price: "¥68"
-                )
-
-                // 月订阅
-                PlanRow(
-                    isSelected: false,
-                    flag: nil,
-                    title: "月订阅",
-                    subtitle: "随时取消",
-                    price: "¥6/月"
-                )
+                // 方案选择
+                VStack(spacing: Theme.Space.sm) {
+                    planRow(
+                        plan: .unlock,
+                        title: "一次性买断",
+                        subtitle: "永久解锁 · 不限张数",
+                        price: "¥68",
+                        badge: "最实惠 · 省 ¥40"
+                    )
+                    planRow(
+                        plan: .monthly,
+                        title: "月订阅",
+                        subtitle: "随时取消",
+                        price: "¥6/月",
+                        badge: nil
+                    )
+                }
+                .padding(.horizontal, Theme.Space.lg)
 
                 // 购买按钮
-                Button {
-                    Task { await purchaseService.purchase(.unlock) }
-                } label: {
-                    Group {
-                        if purchaseService.isPurchasing {
-                            ProgressView().tint(.white)
-                        } else {
-                            Text("永久解锁 · ¥68")
-                                .fontWeight(.bold)
-                        }
+                PrimaryButton(
+                    title: selectedPlan == .unlock ? "永久解锁 · ¥68" : "订阅解锁 · ¥6/月",
+                    isLoading: purchaseService.isPurchasing
+                ) {
+                    Task {
+                        await purchaseService.purchase(selectedPlan == .unlock ? .unlock : .monthly)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color.accentColor)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
-                .disabled(purchaseService.isPurchasing)
+                .padding(.horizontal, Theme.Space.lg)
+                .padding(.top, Theme.Space.md)
 
-                HStack(spacing: 20) {
+                // 底部链接
+                HStack(spacing: Theme.Space.lg) {
                     Button("恢复购买") { Task { await purchaseService.restore() } }
-                    Text("·")
+                    Text("·").foregroundStyle(Theme.Colors.ink3)
                     Button("用户协议") {}
+                    Text("·").foregroundStyle(Theme.Colors.ink3)
+                    Button("隐私政策") {}
                 }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.bottom, 8)
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Colors.ink2)
+                .padding(.top, Theme.Space.md)
+                .padding(.bottom, Theme.Space.xl)
             }
-            .padding(.horizontal, 20)
         }
     }
 
-    // MARK: - 导出图片
+    private func planRow(plan: PurchasePlan, title: String, subtitle: String, price: String, badge: String?) -> some View {
+        let isSelected = selectedPlan == plan
+
+        return Button {
+            selectedPlan = plan
+        } label: {
+            ZStack(alignment: .topTrailing) {
+                HStack(spacing: Theme.Space.md) {
+                    // 单选圆点
+                    ZStack {
+                        Circle()
+                            .stroke(isSelected ? Theme.Colors.accent : Theme.Colors.ink3, lineWidth: 1.5)
+                            .frame(width: 20, height: 20)
+                        if isSelected {
+                            Circle()
+                                .fill(Theme.Colors.accent)
+                                .frame(width: 10, height: 10)
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(title)
+                            .font(Theme.Font.subhead)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(Theme.Colors.ink)
+                        Text(subtitle)
+                            .font(Theme.Font.caption)
+                            .foregroundStyle(Theme.Colors.ink2)
+                    }
+
+                    Spacer()
+
+                    Text(price)
+                        .font(Theme.Font.data(16, weight: .medium))
+                        .foregroundStyle(isSelected ? (plan == .unlock ? Theme.Colors.gold : Theme.Colors.accent) : Theme.Colors.ink2)
+                }
+                .padding(Theme.Space.md)
+                .background(isSelected ? (plan == .unlock ? Theme.Colors.gold.opacity(0.06) : Theme.Colors.accentSoft) : Theme.Colors.bg2)
+                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.field))
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.Radius.field)
+                        .stroke(isSelected ? (plan == .unlock ? Theme.Colors.gold : Theme.Colors.accent) : Theme.Colors.hairline,
+                                lineWidth: isSelected ? 1.5 : 1)
+                )
+
+                // Badge
+                if let badge = badge {
+                    Text(badge)
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Theme.Colors.gold)
+                        .clipShape(Capsule())
+                        .offset(x: -12, y: -10)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - 导出
     private func exportImage() {
         Task { @MainActor in
             let img = ImageRenderService.renderCard(session: session, visibleElements: config)
@@ -160,49 +227,9 @@ struct PreviewExportView: View {
             withAnimation { showSuccessToast = true }
             try? await Task.sleep(nanoseconds: 2_000_000_000)
             withAnimation { showSuccessToast = false }
-
-            // 延迟一点再弹分享
             try? await Task.sleep(nanoseconds: 300_000_000)
             showShareSheet = true
         }
-    }
-}
-
-// MARK: - 方案行
-private struct PlanRow: View {
-    let isSelected: Bool
-    let flag: String?
-    let title: String
-    let subtitle: String
-    let price: String
-
-    var body: some View {
-        HStack {
-            Image(systemName: isSelected ? "record.circle.fill" : "circle")
-                .foregroundStyle(isSelected ? Color.accentColor : .secondary)
-            VStack(alignment: .leading, spacing: 2) {
-                HStack {
-                    Text(title).fontWeight(.medium)
-                    if let flag {
-                        Text(flag)
-                            .font(.system(size: 9, weight: .bold))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.accentColor)
-                            .foregroundStyle(.white)
-                            .clipShape(Capsule())
-                    }
-                }
-                Text(subtitle).font(.caption).foregroundStyle(.secondary)
-            }
-            Spacer()
-            Text(price).fontWeight(.semibold)
-        }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(isSelected ? Color.accentColor : Color(.systemGray5), lineWidth: isSelected ? 1.5 : 1)
-        )
     }
 }
 

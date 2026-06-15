@@ -62,8 +62,10 @@ class RecordSession: ObservableObject {
 struct FishForm: Identifiable {
     var id = UUID()
     var speciesName: String = ""
-    var lengthCm: String = ""   // 用字符串方便 TextField 绑定
-    var weightKg: String = ""   // 选填
+    var lengthCm: String = ""        // 用字符串方便 TextField 绑定
+    var weightKg: String = ""        // 选填
+    var fishingMethod: String = ""   // 钓法（路亚/台钓/矶钓/筏钓/其他）
+    var notes: String = ""           // 备注
 }
 
 /// 用户选择纳入天气快照的字段开关
