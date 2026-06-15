@@ -11,6 +11,7 @@ struct SavedView: View {
     @State private var savedSession: FishingSession? = nil
     @State private var navigateToShare = false
     @State private var isSaving = true
+    @State private var hasSaved = false
     @State private var badgeScale: CGFloat = 0.3
     @State private var badgeOpacity: Double = 0
 
@@ -87,6 +88,9 @@ struct SavedView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .task {
+            // 幂等守卫：整个记录流只写库一次，避免 .task 重新触发导致重复记录
+            guard !hasSaved else { return }
+            hasSaved = true
             await saveSession()
             // 入场动画
             withAnimation(.spring(response: 0.5, dampingFraction: 0.65)) {
