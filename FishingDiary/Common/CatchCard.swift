@@ -169,6 +169,93 @@ struct CatchCard: View {
     }
 }
 
+// MARK: - 双列瀑布流紧凑卡（小红书式）
+struct GridCatchCard: View {
+    let session: FishingSession
+    let fishCatch: FishCatch
+
+    private var dateText: String {
+        let fmt = DateFormatter()
+        fmt.dateFormat = "MM.dd"
+        return fmt.string(from: session.date)
+    }
+
+    private var image: UIImage? { UIImage(data: fishCatch.cutoutImageData) }
+
+    private var metricText: String {
+        if let len = fishCatch.lengthCm { return "\(Int(len)) cm" }
+        if session.totalCatch > 1 { return "×\(session.totalCatch)" }
+        if let kg = fishCatch.weightKg { return String(format: "%.1f kg", kg) }
+        return ""
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            imageArea
+            VStack(alignment: .leading, spacing: 4) {
+                Text(fishCatch.speciesName.isEmpty ? "未知鱼种" : fishCatch.speciesName)
+                    .font(Theme.Font.subhead)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Theme.Colors.ink)
+                    .lineLimit(1)
+
+                Text("\(session.locationName.isEmpty ? "未知钓点" : session.locationName) · \(dateText)")
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Colors.ink2)
+                    .lineLimit(1)
+
+                if !metricText.isEmpty {
+                    Text(metricText)
+                        .font(Theme.Font.data(16, weight: .medium))
+                        .foregroundStyle(Theme.Colors.ink)
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.top, 8)
+            .padding(.bottom, 11)
+        }
+        .background(Theme.Colors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
+        .shadowCard()
+    }
+
+    private var imageArea: some View {
+        ZStack {
+            if let img = image {
+                Image(uiImage: img)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: .infinity)
+            } else {
+                Theme.Colors.catchGradient(for: fishCatch.id)
+                    .aspectRatio(1, contentMode: .fit)
+            }
+        }
+        .background(Theme.Colors.bg2)
+        .overlay(alignment: .topLeading) {
+            pill(dateText)
+                .padding(8)
+        }
+        .overlay(alignment: .topTrailing) {
+            if !session.fishingMethod.isEmpty {
+                pill(session.fishingMethod)
+                    .padding(8)
+            }
+        }
+    }
+
+    private func pill(_ text: String) -> some View {
+        Text(text)
+            .font(Theme.Font.microLabel)
+            .foregroundStyle(.white.opacity(0.95))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(.black.opacity(0.35))
+            .background(.ultraThinMaterial)
+            .clipShape(Capsule())
+    }
+}
+
 // MARK: - Preview
 #Preview {
     let session = FishingSession(date: .now, locationName: "千岛湖 · 大坝南")

@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import ImageIO
 
 // MARK: - 日记时间线（主页）
 struct DiaryListView: View {
@@ -7,6 +8,7 @@ struct DiaryListView: View {
     private var sessions: [FishingSession]
 
     @State private var filterSpecies: String? = nil
+    @AppStorage("diaryGridMode") private var isGrid = false
 
     private var allSpecies: [String] {
         Array(Set(sessions.flatMap { $0.speciesNames }.filter { !$0.isEmpty })).sorted()
@@ -52,6 +54,14 @@ struct DiaryListView: View {
         .navigationTitle("钓鱼日记")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) { isGrid.toggle() }
+                } label: {
+                    Image(systemName: isGrid ? "rectangle.grid.1x2" : "square.grid.2x2")
+                        .foregroundStyle(Theme.Colors.ink2)
+                }
+            }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     // TODO: 年份筛选
@@ -130,14 +140,88 @@ struct DiaryListView: View {
                 .padding(.top, Theme.Space.xl)
                 .padding(.bottom, Theme.Space.xs)
 
-            ForEach(items) { entry in
-                NavigationLink(destination: SessionDetailView(session: entry.session, selectedCatch: entry.fish)) {
-                    CatchCard(session: entry.session, fishCatch: entry.fish)
-                }
-                .buttonStyle(.plain)
-                .padding(.bottom, Theme.Space.md)
+            if isGrid {
+                doubleColumn(items)
+            } else {
+                singleColumn(items)
             }
         }
+    }
+
+    // MARK: - 单列（大卡）
+    private func singleColumn(_ items: [CatchEntry]) -> some View {
+        ForEach(items) { entry in
+            NavigationLink(destination: SessionDetailView(session: entry.session, selectedCatch: entry.fish)) {
+                CatchCard(session: entry.session, fishCatch: entry.fish)
+            }
+            .buttonStyle(.plain)
+            .padding(.bottom, Theme.Space.md)
+        }
+    }
+
+    // MARK: - 双列瀑布流（小红书式）
+    private func doubleColumn(_ items: [CatchEntry]) -> some View {
+        let columns = split(items)
+        return HStack(alignment: .top, spacing: Theme.Space.md) {
+            masonryColumn(columns.left)
+            masonryColumn(columns.right)
+        }
+        .padding(.bottom, Theme.Space.md)
+    }
+
+    private func masonryColumn(_ column: [CatchEntry]) -> some View {
+        LazyVStack(spacing: Theme.Space.md) {
+            ForEach(column) { entry in
+                NavigationLink(destination: SessionDetailView(session: entry.session, selectedCatch: entry.fish)) {
+                    GridCatchCard(session: entry.session, fishCatch: entry.fish)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .top)
+    }
+
+    /// 按图片比例做贪心分配，保证两列高度尽量均衡（瀑布流）
+    private func split(_ items: [CatchEntry]) -> (left: [CatchEntry], right: [CatchEntry]) {
+        var left: [CatchEntry] = []
+        var right: [CatchEntry] = []
+        var leftHeight: CGFloat = 0
+        var rightHeight: CGFloat = 0
+        for entry in items {
+            let aspect = MasonryHelper.aspect(id: entry.fish.id, data: entry.fish.cutoutImageData)
+            let estimated = aspect + 0.5   // 图片比例 + 文字区常量
+            if leftHeight <= rightHeight {
+                left.append(entry)
+                leftHeight += estimated
+            } else {
+                right.append(entry)
+                rightHeight += estimated
+            }
+        }
+        return (left, right)
+    }
+}
+
+// MARK: - 图片比例缓存（仅读图头，不解码整图）
+private enum MasonryHelper {
+    private static var cache: [UUID: CGFloat] = [:]
+
+    /// 返回 高/宽，失败回退 1.0
+    static func aspect(id: UUID, data: Data) -> CGFloat {
+        if let hit = cache[id] { return hit }
+        let value = compute(data)
+        cache[id] = value
+        return value
+    }
+
+    private static func compute(_ data: Data) -> CGFloat {
+        guard !data.isEmpty,
+              let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let w = (props[kCGImagePropertyPixelWidth] as? NSNumber)?.doubleValue,
+              let h = (props[kCGImagePropertyPixelHeight] as? NSNumber)?.doubleValue,
+              w > 0 else { return 1.0 }
+        return CGFloat(h / w)
     }
 }
 
