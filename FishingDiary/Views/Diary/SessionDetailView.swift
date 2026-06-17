@@ -74,19 +74,20 @@ struct SessionDetailView: View {
     // MARK: - 英雄照片区
     private var heroSection: some View {
         ZStack(alignment: .bottomLeading) {
-            // 背景图（当前选中的鱼）
-            Group {
-                if let c = selectedCatch, let img = UIImage(data: c.cutoutImageData) {
-                    Image(uiImage: img)
-                        .resizable()
-                        .scaledToFill()
-                } else {
-                    Theme.Colors.catchGradient(for: session.id)
+            // 背景图（当前选中的鱼）—— 用 Color.clear 定宽容器，避免 scaledToFill 撑宽整页
+            Color.clear
+                .frame(maxWidth: .infinity)
+                .frame(height: 300)
+                .overlay {
+                    if let c = selectedCatch, let img = UIImage(data: c.cutoutImageData) {
+                        Image(uiImage: img)
+                            .resizable()
+                            .scaledToFill()
+                    } else {
+                        Theme.Colors.catchGradient(for: session.id)
+                    }
                 }
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 300)
-            .clipped()
+                .clipped()
 
             // 渐变蒙层
             LinearGradient(
