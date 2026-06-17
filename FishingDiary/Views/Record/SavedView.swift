@@ -170,10 +170,16 @@ struct SavedView: View {
             let effective = images[safe: i] ?? UIImage()
             let original = recordSession.rawImages[safe: i] ?? UIImage()
 
+            // 重量：按录入单位换算成 kg，再统一一位小数
+            let weightKg = Double(form.weightValue)
+                .map { form.weightUnit.toKilograms($0) }
+                .map { ($0 * 10).rounded() / 10 }
+
             let catch_ = FishCatch(
                 speciesName: form.speciesName.isEmpty ? "未知鱼种" : form.speciesName,
                 lengthCm: Double(form.lengthCm),
-                weightKg: Double(form.weightKg).map { ($0 * 10).rounded() / 10 },   // 统一一位小数
+                weightKg: weightKg,
+                fishingMethod: form.fishingMethod,   // 每尾各自的钓法（未填即空）
                 cutoutImageData: effective.pngData() ?? Data(),
                 originalImageData: original.jpegData(compressionQuality: 0.8) ?? Data(),
                 sortIndex: i

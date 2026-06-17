@@ -447,16 +447,8 @@ struct CropViewControllerWrapper: UIViewControllerRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
-    func makeUIViewController(context: Context) -> UIViewController {
-        let host = UIViewController()
-        host.view.backgroundColor = .black
-        return host
-    }
-
-    func updateUIViewController(_ host: UIViewController, context: Context) {
-        guard !context.coordinator.didPresent else { return }
-        context.coordinator.didPresent = true
-
+    // 直接把 TOCropViewController 作为 cover 的根控制器，避免再嵌套 present 造成黑屏
+    func makeUIViewController(context: Context) -> TOCropViewController {
         let cropVC = TOCropViewController(croppingStyle: .default, image: image)
         cropVC.delegate = context.coordinator
         cropVC.resetAspectRatioEnabled = true
@@ -466,33 +458,26 @@ struct CropViewControllerWrapper: UIViewControllerRepresentable {
         cropVC.aspectRatioPickerButtonHidden = false
         cropVC.doneButtonTitle = "完成"
         cropVC.cancelButtonTitle = "取消"
-        cropVC.modalPresentationStyle = .fullScreen
-        cropVC.modalTransitionStyle = .crossDissolve
-
-        DispatchQueue.main.async {
-            host.present(cropVC, animated: true)
-        }
+        return cropVC
     }
+
+    func updateUIViewController(_ cropVC: TOCropViewController, context: Context) {}
 
     class Coordinator: NSObject, TOCropViewControllerDelegate {
         let parent: CropViewControllerWrapper
-        var didPresent = false
         init(_ parent: CropViewControllerWrapper) { self.parent = parent }
 
         func cropViewController(_ cropViewController: TOCropViewController,
                                 didCropTo image: UIImage,
                                 with cropRect: CGRect,
                                 angle: Int) {
-            cropViewController.dismiss(animated: true) {
-                self.parent.onCrop(image)
-            }
+            // 不自己 dismiss，交回 SwiftUI 关闭 cover
+            parent.onCrop(image)
         }
 
         func cropViewController(_ cropViewController: TOCropViewController,
                                 didFinishCancelled cancelled: Bool) {
-            cropViewController.dismiss(animated: true) {
-                self.parent.onCancel()
-            }
+            parent.onCancel()
         }
     }
 }

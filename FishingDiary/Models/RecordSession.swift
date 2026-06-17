@@ -58,12 +58,27 @@ class RecordSession: ObservableObject {
 
 // MARK: - 子类型
 
+/// 重量单位
+enum WeightUnit: String, CaseIterable {
+    case kg = "kg"
+    case jin = "斤"
+
+    /// 把该单位下的数值换算成公斤
+    func toKilograms(_ value: Double) -> Double {
+        switch self {
+        case .kg:  return value
+        case .jin: return value * 0.5   // 1 斤 = 0.5 kg
+        }
+    }
+}
+
 /// 单尾鱼的填写表单
 struct FishForm: Identifiable {
     var id = UUID()
     var speciesName: String = ""
     var lengthCm: String = ""        // 用字符串方便 TextField 绑定
-    var weightKg: String = ""        // 选填
+    var weightValue: String = ""     // 选填，按 weightUnit 解释
+    var weightUnit: WeightUnit = .kg // 录入单位（kg / 斤）
     var fishingMethod: String = ""   // 钓法（路亚/台钓/矶钓/筏钓/其他）
     var notes: String = ""           // 备注
 }
@@ -80,15 +95,16 @@ struct WeatherToggles {
     var moonPhase: Bool
     var condition: Bool
 
+    /// 默认全部开启，用户可自行关闭不想记录的项
     static let defaultOn = WeatherToggles(
         location: true,
         temperature: true,
-        waterTemp: false,
+        waterTemp: true,
         wind: true,
         pressure: true,
-        uvIndex: false,
+        uvIndex: true,
         tide: true,
-        moonPhase: false,
+        moonPhase: true,
         condition: true
     )
 }

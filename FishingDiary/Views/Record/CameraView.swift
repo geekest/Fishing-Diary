@@ -139,16 +139,22 @@ struct CameraView: View {
 
                 Spacer()
 
-                // 下一步
+                // 下一步（有照片后高亮为亮色，明确可点）
                 Button {
                     goNext()
                 } label: {
                     VStack(spacing: 3) {
                         Image(systemName: "arrow.right.circle.fill")
-                            .font(.system(size: 24))
-                        Text("下一步").font(.caption2)
+                            .font(.system(size: 26))
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(
+                                images.isEmpty ? AnyShapeStyle(.white.opacity(0.25)) : AnyShapeStyle(.white),
+                                images.isEmpty ? AnyShapeStyle(.clear) : AnyShapeStyle(Theme.Colors.accent)
+                            )
+                        Text("下一步")
+                            .font(.caption2)
+                            .foregroundStyle(images.isEmpty ? .white.opacity(0.3) : .white)
                     }
-                    .foregroundStyle(images.isEmpty ? .white.opacity(0.3) : Theme.Colors.accent)
                     .frame(width: 64)
                 }
                 .disabled(images.isEmpty)

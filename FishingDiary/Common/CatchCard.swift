@@ -60,10 +60,10 @@ struct CatchCard: View {
                 pillTag(dateText)
                     .padding(Theme.Space.md)
             }
-            // 右上钓法 pill
+            // 右上钓法 pill（每尾各自，未填不显示）
             .overlay(alignment: .topTrailing) {
-                if !session.fishingMethod.isEmpty {
-                    pillTag(session.fishingMethod)
+                if !fishCatch.fishingMethod.isEmpty {
+                    pillTag(fishCatch.fishingMethod)
                         .padding(Theme.Space.md)
                 }
             }
@@ -237,8 +237,8 @@ struct GridCatchCard: View {
                 .padding(8)
         }
         .overlay(alignment: .topTrailing) {
-            if !session.fishingMethod.isEmpty {
-                pill(session.fishingMethod)
+            if !fishCatch.fishingMethod.isEmpty {
+                pill(fishCatch.fishingMethod)
                     .padding(8)
             }
         }
