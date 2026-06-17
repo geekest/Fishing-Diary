@@ -98,22 +98,24 @@ struct DiaryListView: View {
     // MARK: - 列表内容
     private var listContent: some View {
         ScrollView {
-            // 筛选 chip 行
-            if !allSpecies.isEmpty {
-                filterChips
-                    .padding(.horizontal, Theme.Space.lg)
-                    .padding(.top, Theme.Space.sm)
-                    .padding(.bottom, Theme.Space.xs)
-            }
-
-            // 月份分组列表
-            LazyVStack(alignment: .leading, spacing: 0, pinnedViews: []) {
-                ForEach(grouped, id: \.0) { month, items in
-                    monthSection(month: month, items: items)
+            VStack(alignment: .leading, spacing: 0) {
+                // 筛选 chip 行
+                if !allSpecies.isEmpty {
+                    filterChips
+                        .padding(.horizontal, Theme.Space.lg)
+                        .padding(.top, Theme.Space.sm)
+                        .padding(.bottom, Theme.Space.xs)
                 }
+
+                // 月份分组列表
+                LazyVStack(alignment: .leading, spacing: 0, pinnedViews: []) {
+                    ForEach(grouped, id: \.0) { month, items in
+                        monthSection(month: month, items: items)
+                    }
+                }
+                .padding(.horizontal, Theme.Space.lg)
+                .padding(.bottom, 100) // 给 tab bar 留空间
             }
-            .padding(.horizontal, Theme.Space.lg)
-            .padding(.bottom, 100) // 给 tab bar 留空间
         }
     }
 
