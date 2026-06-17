@@ -97,17 +97,17 @@ struct DiaryListView: View {
 
     // MARK: - 列表内容
     private var listContent: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                // 筛选 chip 行
-                if !allSpecies.isEmpty {
-                    filterChips
-                        .padding(.horizontal, Theme.Space.lg)
-                        .padding(.top, Theme.Space.sm)
-                        .padding(.bottom, Theme.Space.xs)
-                }
+        VStack(spacing: 0) {
+            // 筛选 chip 行（固定头部，独立于卡片滚动区，避免与卡片点击区重叠）
+            if !allSpecies.isEmpty {
+                filterChips
+                    .padding(.horizontal, Theme.Space.lg)
+                    .padding(.top, Theme.Space.sm)
+                    .padding(.bottom, Theme.Space.sm)
+            }
 
-                // 月份分组列表
+            // 月份分组列表（可滚动）
+            ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0, pinnedViews: []) {
                     ForEach(grouped, id: \.0) { month, items in
                         monthSection(month: month, items: items)
