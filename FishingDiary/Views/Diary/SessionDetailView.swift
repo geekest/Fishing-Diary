@@ -9,7 +9,6 @@ struct SessionDetailView: View {
     @State private var selectedCatch: FishCatch?
     @State private var navigateToShare = false
     @State private var showEditSheet = false
-    @State private var showMoreDialog = false
     @State private var showMapDetail = false
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -68,14 +67,6 @@ struct SessionDetailView: View {
             if let coord = coordinate {
                 MapDetailView(coordinate: coord, name: session.locationName)
             }
-        }
-        .confirmationDialog("更多操作", isPresented: $showMoreDialog, titleVisibility: .visible) {
-            Button("删除记录", role: .destructive) {
-                modelContext.delete(session)
-                try? modelContext.save()
-                dismiss()
-            }
-            Button("取消", role: .cancel) {}
         }
         .hidesFloatingTabBar()
     }
@@ -338,7 +329,7 @@ struct SessionDetailView: View {
                 }
 
                 if let kg = fishCatch.weightKg {
-                    Text(String(format: "%.2f kg", kg))
+                    Text(String(format: "%.1f kg", kg))
                         .font(Theme.Font.caption)
                         .foregroundStyle(Theme.Colors.ink2)
                 }
@@ -366,40 +357,54 @@ struct SessionDetailView: View {
         .shadowSoft()
     }
 
-    // MARK: - 底部操作（编辑 / 生成分享图 / 更多）
+    // MARK: - 底部操作（编辑 / 生成分享图 / 更多，三者等大）
     private var bottomActions: some View {
         HStack(spacing: Theme.Space.md) {
-            actionButton(icon: "slider.horizontal.3", label: "编辑", highlighted: false) {
+            Button {
                 showEditSheet = true
+            } label: {
+                actionLabel(icon: "slider.horizontal.3", label: "编辑", highlighted: false)
             }
-            actionButton(icon: "sparkles", label: "生成分享图", highlighted: true) {
+            .buttonStyle(ScaleButtonStyle())
+
+            Button {
                 navigateToShare = true
+            } label: {
+                actionLabel(icon: "sparkles", label: "生成分享图", highlighted: true)
             }
-            actionButton(icon: "ellipsis", label: "更多", highlighted: false) {
-                showMoreDialog = true
+            .buttonStyle(ScaleButtonStyle())
+
+            // 更多：用 Menu，弹层锚定在按钮上（不再飞到顶部）
+            Menu {
+                Button(role: .destructive) {
+                    modelContext.delete(session)
+                    try? modelContext.save()
+                    dismiss()
+                } label: {
+                    Label("删除记录", systemImage: "trash")
+                }
+            } label: {
+                actionLabel(icon: "ellipsis", label: "更多", highlighted: false)
             }
         }
     }
 
-    private func actionButton(icon: String, label: String, highlighted: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack(spacing: 5) {
-                Image(systemName: icon)
-                    .font(.system(size: 18))
-                Text(label)
-                    .font(Theme.Font.caption)
-            }
-            .foregroundStyle(highlighted ? Theme.Colors.accent : Theme.Colors.ink2)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(highlighted ? Theme.Colors.accentSoft : Theme.Colors.surface)
-            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.field))
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.Radius.field)
-                    .stroke(highlighted ? Theme.Colors.accent.opacity(0.35) : Theme.Colors.hairline, lineWidth: 1)
-            )
+    private func actionLabel(icon: String, label: String, highlighted: Bool) -> some View {
+        VStack(spacing: 5) {
+            Image(systemName: icon)
+                .font(.system(size: 18))
+            Text(label)
+                .font(Theme.Font.caption)
         }
-        .buttonStyle(ScaleButtonStyle())
+        .foregroundStyle(highlighted ? Theme.Colors.accent : Theme.Colors.ink2)
+        .frame(maxWidth: .infinity)
+        .frame(height: 56)
+        .background(highlighted ? Theme.Colors.accentSoft : Theme.Colors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.field))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.field)
+                .stroke(highlighted ? Theme.Colors.accent.opacity(0.35) : Theme.Colors.hairline, lineWidth: 1)
+        )
     }
 
     // MARK: - 鱼种学名映射
@@ -497,7 +502,7 @@ struct EditSessionSheet: View {
                     id: c.id,
                     species: c.speciesName,
                     length: c.lengthCm.map { "\(Int($0))" } ?? "",
-                    weight: c.weightKg.map { String(format: "%.2f", $0) } ?? "",
+                    weight: c.weightKg.map { String(format: "%.1f", $0) } ?? "",
                     image: UIImage(data: c.cutoutImageData)
                 )
             }
@@ -689,7 +694,7 @@ struct EditSessionSheet: View {
             guard let c = byID[edit.id] else { continue }
             c.speciesName = edit.species.isEmpty ? c.speciesName : edit.species
             c.lengthCm = Double(edit.length)
-            c.weightKg = Double(edit.weight)
+            c.weightKg = Double(edit.weight).map { ($0 * 10).rounded() / 10 }   // 统一一位小数
             if let orig = edit.newOriginal, let d = orig.jpegData(compressionQuality: 0.8) {
                 c.originalImageData = d
             }

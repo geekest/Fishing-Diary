@@ -173,7 +173,7 @@ struct SavedView: View {
             let catch_ = FishCatch(
                 speciesName: form.speciesName.isEmpty ? "未知鱼种" : form.speciesName,
                 lengthCm: Double(form.lengthCm),
-                weightKg: Double(form.weightKg),
+                weightKg: Double(form.weightKg).map { ($0 * 10).rounded() / 10 },   // 统一一位小数
                 cutoutImageData: effective.pngData() ?? Data(),
                 originalImageData: original.jpegData(compressionQuality: 0.8) ?? Data(),
                 sortIndex: i
