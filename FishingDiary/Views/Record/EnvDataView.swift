@@ -261,7 +261,8 @@ struct EnvDataView: View {
     private func optNumberText(_ kp: WritableKeyPath<WeatherSnapshot, Double?>) -> Binding<String> {
         Binding(
             get: {
-                guard let outer = recordSession.weather?[keyPath: kp], let v = outer else { return "" }
+                // 可选链已展平为 Double?，一层解包即可
+                guard let v = recordSession.weather?[keyPath: kp] else { return "" }
                 return trimNumber(v)
             },
             set: { str in
@@ -296,7 +297,7 @@ struct EnvDataView: View {
 
     private func optStringText(_ kp: WritableKeyPath<WeatherSnapshot, String?>) -> Binding<String> {
         Binding(
-            get: { (recordSession.weather?[keyPath: kp] ?? nil) ?? "" },
+            get: { recordSession.weather?[keyPath: kp] ?? "" },
             set: { str in
                 ensureWeather()
                 recordSession.weather?[keyPath: kp] = str.isEmpty ? nil : str
