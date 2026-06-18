@@ -60,4 +60,8 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+<<<<<<< Updated upstream
 FishingDiary.xcodeproj/project.pbxproj
+=======
+.DS_Store
+>>>>>>> Stashed changes
