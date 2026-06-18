@@ -1,8 +1,9 @@
 import SwiftUI
 
-// MARK: - 渔获卡片（首页核心组件）
+// MARK: - 渔获卡片（首页核心组件，按「单尾鱼」展示）
 struct CatchCard: View {
     let session: FishingSession
+    let fishCatch: FishCatch
 
     private var dateText: String {
         let fmt = DateFormatter()
@@ -14,18 +15,13 @@ struct CatchCard: View {
         session.locationName.isEmpty ? "未知钓点" : session.locationName
     }
 
-    private var primaryCatch: FishCatch? {
-        session.catches.sorted(by: { $0.sortIndex < $1.sortIndex }).first
-    }
-
     private var lengthText: String {
-        guard let len = primaryCatch?.lengthCm else { return "" }
+        guard let len = fishCatch.lengthCm else { return "" }
         return "\(Int(len)) cm"
     }
 
     private var speciesText: String {
-        let names = session.speciesNames
-        return names.isEmpty ? "未知鱼种" : names.joined(separator: " · ")
+        fishCatch.speciesName.isEmpty ? "未知鱼种" : fishCatch.speciesName
     }
 
     var body: some View {
@@ -64,10 +60,10 @@ struct CatchCard: View {
                 pillTag(dateText)
                     .padding(Theme.Space.md)
             }
-            // 右上钓法 pill
+            // 右上钓法 pill（每尾各自，未填不显示）
             .overlay(alignment: .topTrailing) {
-                if !session.fishingMethod.isEmpty {
-                    pillTag(session.fishingMethod)
+                if !fishCatch.fishingMethod.isEmpty {
+                    pillTag(fishCatch.fishingMethod)
                         .padding(Theme.Space.md)
                 }
             }
@@ -85,12 +81,12 @@ struct CatchCard: View {
 
     @ViewBuilder
     private var photoBackground: some View {
-        if let data = session.coverImageData, let img = UIImage(data: data) {
+        if let img = UIImage(data: fishCatch.cutoutImageData) {
             Image(uiImage: img)
                 .resizable()
                 .scaledToFill()
         } else {
-            Theme.Colors.catchGradient(for: session.id)
+            Theme.Colors.catchGradient(for: fishCatch.id)
         }
     }
 
@@ -132,28 +128,32 @@ struct CatchCard: View {
             }
 
             // 环境 chip 行
-            if let weather = session.weather {
-                envChips(weather: weather)
-            }
+            chipRow
         }
         .padding(.horizontal, 14)
         .padding(.top, 11)
         .padding(.bottom, 13)
     }
 
-    private func envChips(weather: WeatherSnapshot) -> some View {
+    private var chipRow: some View {
         HStack(spacing: 6) {
-            if !weather.condition.isEmpty {
-                envChip(weather.condition)
+            if let weather = session.weather {
+                if !weather.condition.isEmpty {
+                    envChip(weather.condition)
+                }
+                if weather.temperature > 0 {
+                    envChip("\(Int(weather.temperature))°C")
+                }
+                if let tide = weather.tide, !tide.isEmpty {
+                    envChip(tide)
+                }
             }
-            if weather.temperature > 0 {
-                envChip("\(Int(weather.temperature))°C")
+            if let kg = fishCatch.weightKg {
+                envChip(String(format: "%.1f kg", kg))
             }
-            if let tide = weather.tide, !tide.isEmpty {
-                envChip(tide)
-            }
+            // 同次出钓的其他渔获数量提示
             if session.totalCatch > 1 {
-                envChip("×\(session.totalCatch)")
+                envChip("本次 ×\(session.totalCatch)")
             }
         }
     }
@@ -169,35 +169,108 @@ struct CatchCard: View {
     }
 }
 
+// MARK: - 双列瀑布流紧凑卡（小红书式）
+struct GridCatchCard: View {
+    let session: FishingSession
+    let fishCatch: FishCatch
+
+    private var dateText: String {
+        let fmt = DateFormatter()
+        fmt.dateFormat = "MM.dd"
+        return fmt.string(from: session.date)
+    }
+
+    private var image: UIImage? { UIImage(data: fishCatch.cutoutImageData) }
+
+    private var metricText: String {
+        if let len = fishCatch.lengthCm { return "\(Int(len)) cm" }
+        if session.totalCatch > 1 { return "×\(session.totalCatch)" }
+        if let kg = fishCatch.weightKg { return String(format: "%.1f kg", kg) }
+        return ""
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            imageArea
+            VStack(alignment: .leading, spacing: 4) {
+                Text(fishCatch.speciesName.isEmpty ? "未知鱼种" : fishCatch.speciesName)
+                    .font(Theme.Font.subhead)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Theme.Colors.ink)
+                    .lineLimit(1)
+
+                Text("\(session.locationName.isEmpty ? "未知钓点" : session.locationName) · \(dateText)")
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Colors.ink2)
+                    .lineLimit(1)
+
+                if !metricText.isEmpty {
+                    Text(metricText)
+                        .font(Theme.Font.data(16, weight: .medium))
+                        .foregroundStyle(Theme.Colors.ink)
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.top, 8)
+            .padding(.bottom, 11)
+        }
+        .background(Theme.Colors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
+        .shadowCard()
+    }
+
+    private var imageArea: some View {
+        ZStack {
+            if let img = image {
+                Image(uiImage: img)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: .infinity)
+            } else {
+                Theme.Colors.catchGradient(for: fishCatch.id)
+                    .aspectRatio(1, contentMode: .fit)
+            }
+        }
+        .background(Theme.Colors.bg2)
+        .overlay(alignment: .topLeading) {
+            pill(dateText)
+                .padding(8)
+        }
+        .overlay(alignment: .topTrailing) {
+            if !fishCatch.fishingMethod.isEmpty {
+                pill(fishCatch.fishingMethod)
+                    .padding(8)
+            }
+        }
+    }
+
+    private func pill(_ text: String) -> some View {
+        Text(text)
+            .font(Theme.Font.microLabel)
+            .foregroundStyle(.white.opacity(0.95))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(.black.opacity(0.35))
+            .background(.ultraThinMaterial)
+            .clipShape(Capsule())
+    }
+}
+
 // MARK: - Preview
 #Preview {
-    ScrollView {
-        VStack(spacing: 16) {
-            // 无图占位
-            CatchCard(session: {
-                let s = FishingSession(date: .now, locationName: "千岛湖 · 大坝南")
-                return s
-            }())
+    let session = FishingSession(date: .now, locationName: "千岛湖 · 大坝南")
+    let w = WeatherSnapshot(
+        temperature: 22, windSpeed: 3.2, windDirection: "SE",
+        pressure: 1014, uvIndex: 5, condition: "多云",
+        waterTemp: nil, moonPhase: nil, tide: "涨潮"
+    )
+    session.weatherData = try? JSONEncoder().encode(w)
+    let fish = FishCatch(speciesName: "大口黑鲈", lengthCm: 38, weightKg: 1.2,
+                         cutoutImageData: Data(), originalImageData: Data(), sortIndex: 0)
 
-            // 有天气数据
-            CatchCard(session: {
-                let s = FishingSession(date: .now, locationName: "太湖 · 西山岛")
-                let w = WeatherSnapshot(
-                    temperature: 22,
-                    windSpeed: 3.2,
-                    windDirection: "SE",
-                    pressure: 1014,
-                    uvIndex: 5,
-                    condition: "多云",
-                    waterTemp: nil,
-                    moonPhase: nil,
-                    tide: "涨潮"
-                )
-                s.weatherData = try? JSONEncoder().encode(w)
-                return s
-            }())
-        }
-        .padding()
+    return ScrollView {
+        CatchCard(session: session, fishCatch: fish)
+            .padding()
     }
     .background(Theme.Colors.bg)
     .modelContainer(for: [FishingSession.self, FishCatch.self], inMemory: true)

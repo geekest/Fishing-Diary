@@ -11,6 +11,7 @@ struct SavedView: View {
     @State private var savedSession: FishingSession? = nil
     @State private var navigateToShare = false
     @State private var isSaving = true
+    @State private var hasSaved = false
     @State private var badgeScale: CGFloat = 0.3
     @State private var badgeOpacity: Double = 0
 
@@ -87,6 +88,9 @@ struct SavedView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .task {
+            // 幂等守卫：整个记录流只写库一次，避免 .task 重新触发导致重复记录
+            guard !hasSaved else { return }
+            hasSaved = true
             await saveSession()
             // 入场动画
             withAnimation(.spring(response: 0.5, dampingFraction: 0.65)) {
@@ -166,10 +170,16 @@ struct SavedView: View {
             let effective = images[safe: i] ?? UIImage()
             let original = recordSession.rawImages[safe: i] ?? UIImage()
 
+            // 重量：按录入单位换算成 kg，再统一一位小数
+            let weightKg = Double(form.weightValue)
+                .map { form.weightUnit.toKilograms($0) }
+                .map { ($0 * 10).rounded() / 10 }
+
             let catch_ = FishCatch(
                 speciesName: form.speciesName.isEmpty ? "未知鱼种" : form.speciesName,
                 lengthCm: Double(form.lengthCm),
-                weightKg: Double(form.weightKg),
+                weightKg: weightKg,
+                fishingMethod: form.fishingMethod,   // 每尾各自的钓法（未填即空）
                 cutoutImageData: effective.pngData() ?? Data(),
                 originalImageData: original.jpegData(compressionQuality: 0.8) ?? Data(),
                 sortIndex: i

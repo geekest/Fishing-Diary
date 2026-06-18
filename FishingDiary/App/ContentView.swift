@@ -1,9 +1,25 @@
 import SwiftUI
 
+/// 子页面（如详情页）可声明隐藏底部浮动 Tab 栏
+struct HideTabBarKey: PreferenceKey {
+    static var defaultValue: Bool = false
+    static func reduce(value: inout Bool, nextValue: () -> Bool) {
+        value = value || nextValue()
+    }
+}
+
+extension View {
+    /// 在该页面显示期间隐藏底部浮动 Tab 栏
+    func hidesFloatingTabBar() -> some View {
+        preference(key: HideTabBarKey.self, value: true)
+    }
+}
+
 struct ContentView: View {
     @AppStorage("hasOnboarded") private var hasOnboarded = false
     @State private var selectedTab: Int = 0
     @State private var showCamera: Bool = false
+    @State private var hideTabBar: Bool = false
 
     var body: some View {
         Group {
@@ -33,12 +49,19 @@ struct ContentView: View {
                 .allowsHitTesting(selectedTab == 2)
             }
             .ignoresSafeArea(edges: .bottom)
+            .onPreferenceChange(HideTabBarKey.self) { hidden in
+                hideTabBar = hidden
+            }
 
-            // 自定义浮动 Tab Bar
-            FloatingTabBar(selectedTab: $selectedTab) {
-                showCamera = true
+            // 自定义浮动 Tab Bar（详情页等子页面隐藏）
+            if !hideTabBar {
+                FloatingTabBar(selectedTab: $selectedTab) {
+                    showCamera = true
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        .animation(.easeInOut(duration: 0.25), value: hideTabBar)
         .fullScreenCover(isPresented: $showCamera) {
             NavigationStack {
                 CameraView(isPresented: $showCamera)

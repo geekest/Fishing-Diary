@@ -7,6 +7,7 @@ struct FishFormView: View {
 
     @State private var navigateToEnv = false
     @State private var showSpeciesPicker = false
+    @State private var showRecut = false
     @FocusState private var focusedField: Field?
 
     private enum Field { case length, weight, notes }
@@ -15,6 +16,30 @@ struct FishFormView: View {
 
     private var currentIndex: Int { recordSession.currentFishIndex }
     private var total: Int { recordSession.fishForms.count }
+    private var currentRaw: UIImage? { recordSession.rawImages[safe: currentIndex] }
+
+    // 重量单位切换（kg / 斤）
+    private var unitToggle: some View {
+        HStack(spacing: 0) {
+            ForEach(WeightUnit.allCases, id: \.self) { unit in
+                let selected = currentForm.wrappedValue.weightUnit == unit
+                Button {
+                    currentForm.wrappedValue.weightUnit = unit
+                } label: {
+                    Text(unit.rawValue)
+                        .font(Theme.Font.microLabel)
+                        .fontWeight(selected ? .semibold : .regular)
+                        .foregroundStyle(selected ? .white : Theme.Colors.ink2)
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 3)
+                        .background(selected ? Theme.Colors.accent : Color.clear)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .background(Theme.Colors.bg2)
+        .clipShape(Capsule())
+    }
 
     private var currentForm: Binding<FishForm> {
         Binding(
@@ -75,6 +100,19 @@ struct FishFormView: View {
                 isPresented: $showSpeciesPicker
             )
             .presentationDetents([.medium, .large])
+        }
+        .fullScreenCover(isPresented: $showRecut) {
+            if let img = currentRaw {
+                CropViewControllerWrapper(image: img) { cropped in
+                    showRecut = false
+                    if recordSession.cutoutImages.indices.contains(currentIndex) {
+                        recordSession.cutoutImages[currentIndex] = cropped
+                    }
+                } onCancel: {
+                    showRecut = false
+                }
+                .ignoresSafeArea()
+            }
         }
     }
 
@@ -182,7 +220,7 @@ struct FishFormView: View {
             Spacer()
 
             Button {
-                recordSession.currentCutoutIndex = currentIndex
+                showRecut = true
             } label: {
                 Text("重抠 ↺")
                     .font(Theme.Font.caption)
@@ -193,6 +231,7 @@ struct FishFormView: View {
                     .background(Theme.Colors.accentSoft)
                     .clipShape(Capsule())
             }
+            .disabled(currentRaw == nil)
         }
         .padding(Theme.Space.md)
         .background(Theme.Colors.surface)
@@ -267,13 +306,13 @@ struct FishFormView: View {
 
             // 体长 + 重量（并排）
             HStack(spacing: 0) {
-                // 体长
+                // 体长（必填）
                 VStack(alignment: .leading, spacing: 5) {
                     Text("体长 cm".uppercased())
                         .font(Theme.Font.microLabel)
                         .kerning(0.5)
                         .foregroundStyle(Theme.Colors.ink3)
-                    TextField("38", text: currentForm.lengthCm)
+                    TextField("必填", text: currentForm.lengthCm)
                         .font(Theme.Font.data(24, weight: .medium))
                         .foregroundStyle(Theme.Colors.ink)
                         .keyboardType(.decimalPad)
@@ -285,13 +324,17 @@ struct FishFormView: View {
                 Divider()
                     .frame(height: 56)
 
-                // 重量
+                // 重量（选填，可切换单位 kg / 斤）
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("重量 kg".uppercased())
-                        .font(Theme.Font.microLabel)
-                        .kerning(0.5)
-                        .foregroundStyle(Theme.Colors.ink3)
-                    TextField("选填", text: currentForm.weightKg)
+                    HStack(spacing: 6) {
+                        Text("重量".uppercased())
+                            .font(Theme.Font.microLabel)
+                            .kerning(0.5)
+                            .foregroundStyle(Theme.Colors.ink3)
+                        Spacer()
+                        unitToggle
+                    }
+                    TextField("选填", text: currentForm.weightValue)
                         .font(Theme.Font.data(24, weight: .medium))
                         .foregroundStyle(Theme.Colors.ink)
                         .keyboardType(.decimalPad)
