@@ -241,3 +241,34 @@ struct FieldContainer<Content: View>: View {
     .padding()
     .background(Theme.Colors.bg)
 }
+
+// MARK: - UIImage 白色描边贴纸效果
+extension UIImage {
+    /// 在透明 PNG 四周生成白色描边，产生剪贴贴纸视觉效果。
+    /// 原理：将图像的 CGImage alpha mask 向 8 个方向各偏移 `width` 点，
+    /// 每次以白色填充裁剪区，最后把原图绘制在最上层。
+    func withWhiteStroke(width: CGFloat = 3) -> UIImage? {
+        guard let cgImage = self.cgImage else { return nil }
+        let margin = width * 2
+        let newSize = CGSize(width: size.width + margin * 2,
+                             height: size.height + margin * 2)
+        UIGraphicsBeginImageContextWithOptions(newSize, false, scale)
+        defer { UIGraphicsEndImageContext() }
+        guard let context = UIGraphicsGetCurrentContext() else { return nil }
+        context.setFillColor(UIColor.white.cgColor)
+        let centerRect = CGRect(x: margin, y: margin,
+                                width: size.width, height: size.height)
+        for step in 0..<8 {
+            let angle = Double(step) * (.pi / 4)
+            let dx = cos(angle) * Double(width)
+            let dy = sin(angle) * Double(width)
+            let shifted = centerRect.offsetBy(dx: CGFloat(dx), dy: CGFloat(dy))
+            context.saveGState()
+            context.clip(to: shifted, mask: cgImage)
+            context.fill(shifted)
+            context.restoreGState()
+        }
+        draw(in: centerRect)
+        return UIGraphicsGetImageFromCurrentImageContext()
+    }
+}
