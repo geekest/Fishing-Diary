@@ -21,11 +21,11 @@ struct ProfileView: View {
         sessions.flatMap { $0.catches }.compactMap(\.lengthCm).max().map { Int($0) } ?? 0
     }
 
-    // 已钓鱼种（去重）
+    // 已钓鱼种（去重），使用每尾鱼自身的抠图而非 Session 封面图
     private var caughtSpecies: [(name: String, imageData: Data?)] {
         var seen = Set<String>()
         return sessions
-            .flatMap { s in s.catches.map { (name: $0.speciesName, imageData: s.coverImageData) } }
+            .flatMap { s in s.catches.map { (name: $0.speciesName, imageData: Data?($0.cutoutImageData)) } }
             .filter { !$0.name.isEmpty && seen.insert($0.name).inserted }
     }
 
@@ -215,11 +215,13 @@ struct ProfileView: View {
     private func dexCell(species: (name: String, imageData: Data?)) -> some View {
         VStack(spacing: 3) {
             ZStack {
-                if let data = species.imageData, let img = UIImage(data: data) {
+                if let data = species.imageData,
+                   let raw = UIImage(data: data),
+                   let img = raw.withWhiteStroke(width: 3) {
                     Image(uiImage: img)
                         .resizable()
-                        .scaledToFill()
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .scaledToFit()
+                        .padding(4)
                 } else {
                     RoundedRectangle(cornerRadius: 8)
                         .fill(Theme.Colors.accentSoft)
@@ -228,7 +230,6 @@ struct ProfileView: View {
             }
             .frame(maxWidth: .infinity)
             .aspectRatio(1, contentMode: .fit)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
 
             Text(species.name)
                 .font(.system(size: 8))
