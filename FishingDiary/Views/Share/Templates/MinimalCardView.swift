@@ -178,7 +178,7 @@ struct MinimalCardView: View {
     private func topWatermark(in size: CGSize) -> some View {
         let metrics = CardMetrics(size: size)
 
-        VStack {
+        return VStack {
             HStack {
                 Spacer()
                 ForEach(0..<4, id: \.self) { _ in
@@ -197,7 +197,7 @@ struct MinimalCardView: View {
     private func watermarkBadge(in size: CGSize) -> some View {
         let metrics = CardMetrics(size: size)
 
-        Text("钓鱼日记")
+        return Text("钓鱼日记")
             .font(.system(size: metrics.envLabelFont, weight: .medium, design: .monospaced))
             .foregroundStyle(.white.opacity(0.4))
             .tracking(metrics.envTracking * 2)
