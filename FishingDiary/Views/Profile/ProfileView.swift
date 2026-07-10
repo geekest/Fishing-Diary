@@ -6,6 +6,7 @@ struct ProfileView: View {
     @Query private var sessions: [FishingSession]
     @EnvironmentObject var purchaseService: PurchaseService
     @AppStorage("userName") private var userName: String = "钓鱼人"
+    @State private var showSettings = false
 
     private let speciesDexTotal = 60
 
@@ -84,6 +85,9 @@ struct ProfileView: View {
         }
         .navigationTitle("我的")
         .navigationBarTitleDisplayMode(.large)
+        .navigationDestination(isPresented: $showSettings) {
+            SettingsView()
+        }
     }
 
     // MARK: - 头像区
@@ -110,7 +114,7 @@ struct ProfileView: View {
             Spacer()
 
             Button {
-                // TODO: 设置页
+                showSettings = true
             } label: {
                 Image(systemName: "gearshape")
                     .font(.system(size: 20))
@@ -381,6 +385,8 @@ struct ProfileView: View {
     private func handleSettingsTap(_ label: String) {
         if label.contains("恢复购买") {
             Task { await purchaseService.restore() }
+        } else if label.contains("设置") {
+            showSettings = true
         }
     }
 }

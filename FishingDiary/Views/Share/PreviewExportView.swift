@@ -4,14 +4,16 @@ import SwiftUI
 struct PreviewExportView: View {
     let session: FishingSession
     let config: ShareElementsConfig
+    let ratio: ShareStyleView.CardRatio
     @Binding var isRecordPresented: Bool
 
     @EnvironmentObject var purchaseService: PurchaseService
     @State private var showPaywall = true
     @State private var showShareSheet = false
     @State private var renderedImage: UIImage? = nil
-    @State private var showSuccessToast = false
+    @State private var showSaveToast = false
     @State private var selectedPlan: PurchasePlan = .unlock
+    @State private var saveToastMessage = ""
 
     enum PurchasePlan { case unlock, monthly }
 
@@ -21,7 +23,8 @@ struct PreviewExportView: View {
             MinimalCardView(
                 session: session,
                 visibleElements: config,
-                showWatermark: !purchaseService.isPurchased
+                showWatermark: !purchaseService.isPurchased,
+                ratio: ratio.aspectRatio
             )
             .ignoresSafeArea()
 
@@ -48,10 +51,10 @@ struct PreviewExportView: View {
             }
 
             // Toast
-            if showSuccessToast {
+            if showSaveToast {
                 VStack {
                     Spacer()
-                    ToastView(message: "高清图已存入相册 ✓")
+                    ToastView(message: saveToastMessage)
                         .padding(.bottom, showPaywall ? 380 : 100)
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -220,15 +223,18 @@ struct PreviewExportView: View {
     // MARK: - 导出
     private func exportImage() {
         Task { @MainActor in
-            let img = ImageRenderService.renderCard(session: session, visibleElements: config)
+            let img = ImageRenderService.renderCard(session: session, visibleElements: config, ratio: ImageRenderService.CardRatio(ratio))
             renderedImage = img
-            ImageRenderService.saveToPhotoLibrary(img)
-
-            withAnimation { showSuccessToast = true }
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
-            withAnimation { showSuccessToast = false }
-            try? await Task.sleep(nanoseconds: 300_000_000)
-            showShareSheet = true
+            ImageRenderService.saveToPhotoLibrary(img) { success in
+                saveToastMessage = success ? "高清图已存入相册 ✓" : "保存失败，请检查相册权限"
+                withAnimation { showSaveToast = true }
+                Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 2_000_000_000)
+                    withAnimation { showSaveToast = false }
+                    try? await Task.sleep(nanoseconds: 300_000_000)
+                    showShareSheet = true
+                }
+            }
         }
     }
 }
@@ -247,6 +253,7 @@ struct ShareSheet: UIViewControllerRepresentable {
         PreviewExportView(
             session: FishingSession(date: .now, locationName: "千岛湖"),
             config: ShareElementsConfig(),
+            ratio: .threeByFour,
             isRecordPresented: .constant(true)
         )
         .environmentObject(PurchaseService())
