@@ -278,7 +278,7 @@ struct ShareStyleView: View {
     .modelContainer(for: [FishingSession.self, FishCatch.self], inMemory: true)
 }
 
-/// 分享卡预览图：统一走导出渲染链路，避免小尺寸 SwiftUI 预览和最终图片不一致。
+/// 分享卡预览图：直接复用出图模板，让小预览和正式导出共享同一套比例排版。
 struct ShareCardPreview: View {
     let session: FishingSession
     let config: ShareElementsConfig
@@ -286,46 +286,14 @@ struct ShareCardPreview: View {
     var showWatermark: Bool = false
     var cornerRadius: CGFloat = 10
 
-    @State private var previewImage: UIImage?
-
-    private var renderKey: RenderKey {
-        RenderKey(
-            sessionID: session.id,
-            config: config,
-            ratio: ratio.rawValue,
-            showWatermark: showWatermark
-        )
-    }
-
     var body: some View {
-        ZStack {
-            Theme.Colors.bg2
-
-            if let previewImage {
-                Image(uiImage: previewImage)
-                    .resizable()
-                    .scaledToFit()
-            } else {
-                ProgressView()
-                    .tint(Theme.Colors.accent)
-            }
-        }
+        MinimalCardView(
+            session: session,
+            visibleElements: config,
+            showWatermark: showWatermark,
+            ratio: ratio.aspectRatio
+        )
         .aspectRatio(ratio.aspectRatio, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-        .task(id: renderKey) {
-            previewImage = ImageRenderService.renderCard(
-                session: session,
-                visibleElements: config,
-                showWatermark: showWatermark,
-                ratio: ImageRenderService.CardRatio(ratio)
-            )
-        }
-    }
-
-    private struct RenderKey: Hashable {
-        let sessionID: UUID
-        let config: ShareElementsConfig
-        let ratio: String
-        let showWatermark: Bool
     }
 }
