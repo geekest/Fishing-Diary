@@ -125,8 +125,8 @@
 - [x] 等待用户确认是否执行规则文件修改。
 - [x] 更新 `AGENTS.md` / PR 模板 / 必要的 `PLANS.md`。
 - [x] 运行文档级验证并审查 diff。
-- [ ] 提交 commit、推送分支并创建中文 PR。
-- [ ] 补充最终结果与复盘。
+- [x] 提交 commit、推送分支并创建中文 PR。
+- [x] 补充最终结果与复盘。
 
 ## 8. 新发现与意外情况
 
@@ -215,4 +215,4 @@
 
 后续：
 
-- 按用户要求提交 commit、推送 `docs/harness-v2` 并创建中文版 PR。
+- 已提交 commit、推送 `docs/harness-v2` 并创建中文版 PR：`https://github.com/geekest/Fishing-Diary/pull/9`。
