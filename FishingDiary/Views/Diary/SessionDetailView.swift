@@ -430,6 +430,7 @@ struct FishEditModel: Identifiable {
     var species: String
     var length: String
     var weight: String
+    var method: String
     var image: UIImage?     // 展示用（抠图/原图），换图后更新
     var newOriginal: UIImage?   // 换图后的新原图（待保存）
     var newCutout: UIImage?     // 换图后的新抠图（待保存）
@@ -449,9 +450,14 @@ struct EditSessionSheet: View {
     @State private var pressureText: String = ""
     @State private var windDirText: String = ""
     @State private var windSpeedText: String = ""
+    @State private var waterTempText: String = ""
     @State private var tideText: String = ""
+    @State private var moonPhaseText: String = ""
     @State private var uvText: String = ""
     @State private var notes: String = ""
+
+    private let methodOptions = ["路亚", "台钓", "矶钓", "筏钓", "其他"]
+    private let moonOptions = ["新月", "上弦", "满月", "下弦"]
 
     @State private var showPicker = false
     @State private var pickingFishID: UUID? = nil
@@ -502,8 +508,9 @@ struct EditSessionSheet: View {
                 FishEditModel(
                     id: c.id,
                     species: c.speciesName,
-                    length: c.lengthCm.map { "\(Int($0))" } ?? "",
+                    length: c.lengthCm.map { trimNumber($0) } ?? "",
                     weight: c.weightKg.map { String(format: "%.1f", $0) } ?? "",
+                    method: c.fishingMethod,
                     image: UIImage(data: c.cutoutImageData)
                 )
             }
@@ -515,7 +522,9 @@ struct EditSessionSheet: View {
             pressureText = w.pressure > 0 ? "\(Int(w.pressure))" : ""
             windDirText = w.windDirection
             windSpeedText = w.windSpeed > 0 ? String(format: "%.1f", w.windSpeed) : ""
+            waterTempText = w.waterTemp.map { trimNumber($0) } ?? ""
             tideText = w.tide ?? ""
+            moonPhaseText = w.moonPhase ?? ""
             uvText = w.uvIndex > 0 ? "\(w.uvIndex)" : ""
         }
     }
@@ -623,12 +632,36 @@ struct EditSessionSheet: View {
                     }
                     Spacer()
                 }
+                methodPicker(edit)
             }
         }
         .padding(Theme.Space.md)
         .background(Theme.Colors.surface)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.field))
         .shadowSoft()
+    }
+
+    private func methodPicker(_ edit: Binding<FishEditModel>) -> some View {
+        Menu {
+            Button("未填写") { edit.wrappedValue.method = "" }
+            ForEach(methodOptions, id: \.self) { method in
+                Button(method) { edit.wrappedValue.method = method }
+            }
+        } label: {
+            HStack {
+                Text("钓法")
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Colors.ink2)
+                Spacer()
+                Text(edit.wrappedValue.method.isEmpty ? "未填写" : edit.wrappedValue.method)
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(edit.wrappedValue.method.isEmpty ? Theme.Colors.ink3 : Theme.Colors.accent)
+                Image(systemName: "chevron.down")
+                    .font(.caption2)
+                    .foregroundStyle(Theme.Colors.ink3)
+            }
+        }
+        .padding(.top, 2)
     }
 
     // MARK: - 环境编辑
@@ -648,7 +681,11 @@ struct EditSessionSheet: View {
                 Divider().padding(.leading, Theme.Space.md)
                 editRow("风速 m/s", text: $windSpeedText, keyboard: .decimalPad)
                 Divider().padding(.leading, Theme.Space.md)
+                editRow("水温 °C", text: $waterTempText, keyboard: .decimalPad)
+                Divider().padding(.leading, Theme.Space.md)
                 editRow("潮汐", text: $tideText)
+                Divider().padding(.leading, Theme.Space.md)
+                enumEditRow("月相", selection: $moonPhaseText, options: moonOptions)
                 Divider().padding(.leading, Theme.Space.md)
                 editRow("紫外线 UVI", text: $uvText, keyboard: .numberPad)
             }
@@ -668,6 +705,33 @@ struct EditSessionSheet: View {
                 .font(Theme.Font.body)
                 .foregroundStyle(Theme.Colors.ink)
                 .keyboardType(keyboard)
+        }
+        .padding(.horizontal, Theme.Space.md)
+        .padding(.vertical, 14)
+    }
+
+    private func enumEditRow(_ label: String, selection: Binding<String>, options: [String]) -> some View {
+        HStack(spacing: Theme.Space.md) {
+            Text(label)
+                .font(Theme.Font.body)
+                .foregroundStyle(Theme.Colors.ink2)
+                .frame(width: 96, alignment: .leading)
+            Spacer()
+            Menu {
+                Button("未填写") { selection.wrappedValue = "" }
+                ForEach(options, id: \.self) { option in
+                    Button(option) { selection.wrappedValue = option }
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Text(selection.wrappedValue.isEmpty ? "未填写" : selection.wrappedValue)
+                        .font(Theme.Font.body)
+                        .foregroundStyle(selection.wrappedValue.isEmpty ? Theme.Colors.ink3 : Theme.Colors.ink)
+                    Image(systemName: "chevron.down")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.Colors.ink3)
+                }
+            }
         }
         .padding(.horizontal, Theme.Space.md)
         .padding(.vertical, 14)
@@ -693,9 +757,10 @@ struct EditSessionSheet: View {
 
         for edit in fishEdits {
             guard let c = byID[edit.id] else { continue }
-            c.speciesName = edit.species.isEmpty ? c.speciesName : edit.species
-            c.lengthCm = Double(edit.length)
-            c.weightKg = Double(edit.weight).map { ($0 * 10).rounded() / 10 }   // 统一一位小数
+            c.speciesName = edit.species.trimmingCharacters(in: .whitespacesAndNewlines)
+            c.lengthCm = normalizedDouble(edit.length)
+            c.weightKg = normalizedDouble(edit.weight).map { ($0 * 10).rounded() / 10 }   // 统一一位小数
+            c.fishingMethod = edit.method
             if let orig = edit.newOriginal, let d = orig.jpegData(compressionQuality: 0.8) {
                 c.originalImageData = d
             }
@@ -712,28 +777,46 @@ struct EditSessionSheet: View {
             session.coverImageData = first.cutoutImageData
         }
 
-        session.locationName = locationName
+        session.locationName = locationName.trimmingCharacters(in: .whitespacesAndNewlines)
+        session.fishingMethod = fishEdits.first(where: { !$0.method.isEmpty })?.method ?? ""
 
         // 环境数据：有任意填写或原本就有才写入
-        let weatherFields = [temperatureText, pressureText, windSpeedText, windDirText, conditionText, tideText, uvText]
+        let weatherFields = [temperatureText, pressureText, windSpeedText, windDirText, conditionText, waterTempText, tideText, moonPhaseText, uvText]
         if session.weather != nil || weatherFields.contains(where: { !$0.isEmpty }) {
             var w = session.weather ?? WeatherSnapshot(
                 temperature: 0, windSpeed: 0, windDirection: "", pressure: 0,
                 uvIndex: 0, condition: "", waterTemp: nil, moonPhase: nil, tide: nil
             )
-            w.temperature = Double(temperatureText) ?? 0
-            w.pressure = Double(pressureText) ?? 0
-            w.windSpeed = Double(windSpeedText) ?? 0
-            w.windDirection = windDirText
-            w.condition = conditionText
-            w.tide = tideText.isEmpty ? nil : tideText
-            w.uvIndex = Int(uvText) ?? 0
+            w.temperature = normalizedDouble(temperatureText) ?? 0
+            w.pressure = normalizedDouble(pressureText) ?? 0
+            w.windSpeed = normalizedDouble(windSpeedText) ?? 0
+            w.windDirection = windDirText.trimmingCharacters(in: .whitespacesAndNewlines)
+            w.condition = conditionText.trimmingCharacters(in: .whitespacesAndNewlines)
+            w.waterTemp = normalizedDouble(waterTempText)
+            w.tide = normalizedOptionalText(tideText)
+            w.moonPhase = normalizedOptionalText(moonPhaseText)
+            w.uvIndex = Int(uvText.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
             session.weather = w
         }
 
-        session.notes = notes.isEmpty ? nil : notes
+        session.notes = normalizedOptionalText(notes)
         try? modelContext.save()
         dismiss()
+    }
+
+    private func normalizedDouble(_ value: String) -> Double? {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        return Double(trimmed)
+    }
+
+    private func trimNumber(_ value: Double) -> String {
+        value.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(value)) : String(format: "%.1f", value)
+    }
+
+    private func normalizedOptionalText(_ value: String) -> String? {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 }
 
