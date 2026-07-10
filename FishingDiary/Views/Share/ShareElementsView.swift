@@ -79,7 +79,7 @@ struct ShareElementsView: View {
             .background(Theme.Colors.bg)
         }
         .navigationDestination(isPresented: $navigateToPreview) {
-            PreviewExportView(session: session, config: config, isRecordPresented: $isRecordPresented)
+            PreviewExportView(session: session, config: config, ratio: ratio, isRecordPresented: $isRecordPresented)
         }
     }
 

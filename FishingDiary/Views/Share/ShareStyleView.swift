@@ -28,7 +28,7 @@ struct ShareStyleView: View {
             case .nineByteen:  return 9.0/16.0
             }
         }
-        var isAvailable: Bool { self == .threeByFour }
+        var isAvailable: Bool { true }
     }
 
     enum CardStyle: String, CaseIterable, Identifiable {

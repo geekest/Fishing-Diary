@@ -4,6 +4,7 @@ import SwiftUI
 struct FishFormView: View {
     @Binding var isRecordPresented: Bool
     @EnvironmentObject var recordSession: RecordSession
+    @AppStorage("defaultWeightUnit") private var defaultWeightUnitRaw = WeightUnit.kg.rawValue
 
     @State private var navigateToEnv = false
     @State private var showSpeciesPicker = false
@@ -43,9 +44,15 @@ struct FishFormView: View {
 
     private var currentForm: Binding<FishForm> {
         Binding(
-            get: { recordSession.fishForms[safe: currentIndex] ?? FishForm() },
+            get: { recordSession.fishForms[safe: currentIndex] ?? defaultFishForm() },
             set: { recordSession.fishForms[currentIndex] = $0 }
         )
+    }
+
+    private func defaultFishForm() -> FishForm {
+        var form = FishForm()
+        form.weightUnit = WeightUnit(rawValue: defaultWeightUnitRaw) ?? .kg
+        return form
     }
 
     var body: some View {
@@ -369,7 +376,7 @@ struct FishFormView: View {
 
     // MARK: - 添加下一尾鱼
     private func addAnotherFish() {
-        recordSession.fishForms.append(FishForm())
+        recordSession.fishForms.append(defaultFishForm())
         if let img = recordSession.rawImages[safe: currentIndex] {
             recordSession.rawImages.append(img)
             recordSession.cutoutImages.append(recordSession.cutoutImages[safe: currentIndex] ?? nil)
