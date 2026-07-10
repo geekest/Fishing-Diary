@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 // MARK: - 我的页
 struct ProfileView: View {
@@ -7,6 +8,8 @@ struct ProfileView: View {
     @EnvironmentObject var purchaseService: PurchaseService
     @AppStorage("userName") private var userName: String = "钓鱼人"
     @State private var showSettings = false
+    @State private var exportedLogFile: ExportedLogFile?
+    @State private var exportErrorMessage: String?
 
     private let speciesDexTotal = 60
 
@@ -87,6 +90,14 @@ struct ProfileView: View {
         .navigationBarTitleDisplayMode(.large)
         .navigationDestination(isPresented: $showSettings) {
             SettingsView()
+        }
+        .sheet(item: $exportedLogFile) { file in
+            ShareSheet(items: [file.url])
+        }
+        .alert("导出失败", isPresented: exportErrorBinding) {
+            Button("知道了", role: .cancel) {}
+        } message: {
+            Text(exportErrorMessage ?? "")
         }
     }
 
@@ -334,8 +345,8 @@ struct ProfileView: View {
     private var settingsList: some View {
         VStack(spacing: Theme.Space.md) {
             settingsGroup(items: [
-                ("icloud", "iCloud 恢复存档", "恢复 ›"),
-                ("arrow.down.doc", "导出我的数据", "›"),
+                ("square.and.arrow.up", "导出本地 CSV", "分享 ›"),
+                ("externaldrive", "本地备份优先", "无需 iCloud"),
                 ("arrow.counterclockwise", "恢复购买", "›"),
                 ("gearshape", "设置 · 单位 / 隐私", "›"),
             ])
@@ -385,9 +396,120 @@ struct ProfileView: View {
     private func handleSettingsTap(_ label: String) {
         if label.contains("恢复购买") {
             Task { await purchaseService.restore() }
+        } else if label.contains("导出") {
+            exportLogbook()
         } else if label.contains("设置") {
             showSettings = true
         }
+    }
+
+    private var exportErrorBinding: Binding<Bool> {
+        Binding(
+            get: { exportErrorMessage != nil },
+            set: { if !$0 { exportErrorMessage = nil } }
+        )
+    }
+
+    private func exportLogbook() {
+        do {
+            let csv = LogbookCSVExporter.makeCSV(from: sessions)
+            let fileName = "FishingDiary-\(LogbookCSVExporter.fileDateString()).csv"
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+            try csv.write(to: url, atomically: true, encoding: .utf8)
+            exportedLogFile = ExportedLogFile(url: url)
+        } catch {
+            exportErrorMessage = "无法生成本地导出文件，请稍后再试。"
+        }
+    }
+}
+
+private struct ExportedLogFile: Identifiable {
+    let id = UUID()
+    let url: URL
+}
+
+private enum LogbookCSVExporter {
+    static func fileDateString(date: Date = .now) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMdd-HHmm"
+        return formatter.string(from: date)
+    }
+
+    static func makeCSV(from sessions: [FishingSession]) -> String {
+        let header = [
+            "date",
+            "location",
+            "latitude",
+            "longitude",
+            "species",
+            "length_cm",
+            "weight_kg",
+            "catch_method",
+            "session_method",
+            "notes",
+            "temperature_c",
+            "water_temp_c",
+            "wind_speed_mps",
+            "wind_direction",
+            "pressure_hpa",
+            "uv_index",
+            "condition",
+            "tide",
+            "moon_phase",
+        ]
+
+        let rows = sessions
+            .sorted { $0.date > $1.date }
+            .flatMap { session -> [[String]] in
+                let catches = session.catches.sorted { $0.sortIndex < $1.sortIndex }
+                if catches.isEmpty {
+                    return [row(session: session, catch_: nil)]
+                }
+                return catches.map { row(session: session, catch_: $0) }
+            }
+
+        return ([header] + rows)
+            .map { $0.map(escape).joined(separator: ",") }
+            .joined(separator: "\n")
+    }
+
+    private static func row(session: FishingSession, catch_: FishCatch?) -> [String] {
+        let weather = session.weather
+        return [
+            session.date.ISO8601Format(),
+            session.locationName,
+            optionalNumber(session.latitude),
+            optionalNumber(session.longitude),
+            catch_?.speciesName ?? "",
+            optionalNumber(catch_?.lengthCm),
+            optionalNumber(catch_?.weightKg),
+            catch_?.fishingMethod ?? "",
+            session.fishingMethod,
+            session.notes ?? "",
+            optionalNumber(weather?.temperature),
+            optionalNumber(weather?.waterTemp),
+            optionalNumber(weather?.windSpeed),
+            weather?.windDirection ?? "",
+            optionalNumber(weather?.pressure),
+            weather.map { "\($0.uvIndex)" } ?? "",
+            weather?.condition ?? "",
+            weather?.tide ?? "",
+            weather?.moonPhase ?? "",
+        ]
+    }
+
+    private static func optionalNumber(_ value: Double?) -> String {
+        guard let value else { return "" }
+        return value.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(value))" : String(format: "%.2f", value)
+    }
+
+    private static func escape(_ value: String) -> String {
+        if value.contains(",") || value.contains("\"") || value.contains("\n") {
+            return "\"\(value.replacingOccurrences(of: "\"", with: "\"\""))\""
+        }
+        return value
     }
 }
 
