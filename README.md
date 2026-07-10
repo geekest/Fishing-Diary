@@ -35,7 +35,7 @@
 - SwiftData
 - XcodeGen
 - TOCropViewController
-- iOS 16.0+
+- iOS 18.0+
 
 ## 项目结构
 
