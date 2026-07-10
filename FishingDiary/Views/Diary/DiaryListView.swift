@@ -1,9 +1,12 @@
 import SwiftUI
 import SwiftData
 import ImageIO
+import UIKit
 
 // MARK: - 日记时间线（主页）
 struct DiaryListView: View {
+    @Environment(\.modelContext) private var modelContext
+
     @Query(sort: \FishingSession.date, order: .reverse)
     private var sessions: [FishingSession]
 
@@ -101,6 +104,15 @@ struct DiaryListView: View {
                 .foregroundStyle(Theme.Colors.ink2)
                 .multilineTextAlignment(.center)
                 .lineSpacing(3)
+
+            PrimaryButton(title: "生成演示记录") {
+                insertSampleData()
+            }
+            .padding(.horizontal, Theme.Space.xl)
+
+            Text("仅写入本机，可在详情页继续编辑。")
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Colors.ink3)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
@@ -324,6 +336,104 @@ struct DiaryListView: View {
         let fmt = DateFormatter()
         fmt.dateFormat = "yyyy年M月d日"
         return fmt.string(from: date)
+    }
+
+    private func insertSampleData() {
+        let calendar = Calendar.current
+        let sampleImageData = sampleFishImageData()
+
+        let weather = WeatherSnapshot(
+            temperature: 24,
+            windSpeed: 3.2,
+            windDirection: "东南",
+            pressure: 1012,
+            uvIndex: 4,
+            condition: "多云",
+            waterTemp: 21,
+            moonPhase: "上弦月",
+            tide: "涨潮"
+        )
+        let weatherData = try? JSONEncoder().encode(weather)
+
+        let firstCatch = FishCatch(
+            speciesName: "翘嘴",
+            lengthCm: 42,
+            weightKg: 0.9,
+            fishingMethod: "路亚",
+            cutoutImageData: sampleImageData,
+            originalImageData: sampleImageData,
+            sortIndex: 0
+        )
+        let secondCatch = FishCatch(
+            speciesName: "鲈鱼",
+            lengthCm: 36,
+            weightKg: 0.7,
+            fishingMethod: "路亚",
+            cutoutImageData: sampleImageData,
+            originalImageData: sampleImageData,
+            sortIndex: 1
+        )
+        let firstSession = FishingSession(
+            date: calendar.date(byAdding: .day, value: -1, to: .now) ?? .now,
+            locationName: "千岛湖 · 大坝南",
+            latitude: 29.61,
+            longitude: 119.03,
+            catches: [firstCatch, secondCatch],
+            weatherData: weatherData,
+            coverImageData: sampleImageData,
+            notes: "傍晚窗口期明显，亮片慢收更稳定。",
+            fishingMethod: "路亚"
+        )
+
+        let thirdCatch = FishCatch(
+            speciesName: "鲫鱼",
+            lengthCm: 24,
+            weightKg: 0.3,
+            fishingMethod: "台钓",
+            cutoutImageData: sampleImageData,
+            originalImageData: sampleImageData,
+            sortIndex: 0
+        )
+        let secondSession = FishingSession(
+            date: calendar.date(byAdding: .day, value: -8, to: .now) ?? .now,
+            locationName: "城市河道 · 老桥边",
+            latitude: 30.24,
+            longitude: 120.16,
+            catches: [thirdCatch],
+            weatherData: weatherData,
+            coverImageData: sampleImageData,
+            notes: "水色偏浑，换小钩后入口更干脆。",
+            fishingMethod: "台钓"
+        )
+
+        [firstCatch, secondCatch, thirdCatch].forEach(modelContext.insert)
+        modelContext.insert(firstSession)
+        modelContext.insert(secondSession)
+        try? modelContext.save()
+    }
+
+    private func sampleFishImageData() -> Data {
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: 640, height: 640))
+        let image = renderer.image { context in
+            UIColor(red: 0.90, green: 0.95, blue: 0.91, alpha: 1).setFill()
+            context.cgContext.fill(CGRect(x: 0, y: 0, width: 640, height: 640))
+
+            UIColor(red: 0.12, green: 0.40, blue: 0.34, alpha: 1).setFill()
+            UIBezierPath(ovalIn: CGRect(x: 142, y: 238, width: 300, height: 140)).fill()
+
+            let tail = UIBezierPath()
+            tail.move(to: CGPoint(x: 438, y: 306))
+            tail.addLine(to: CGPoint(x: 536, y: 232))
+            tail.addLine(to: CGPoint(x: 536, y: 380))
+            tail.close()
+            tail.fill()
+
+            UIColor.white.setFill()
+            UIBezierPath(ovalIn: CGRect(x: 216, y: 278, width: 24, height: 24)).fill()
+            UIColor.black.setFill()
+            UIBezierPath(ovalIn: CGRect(x: 224, y: 286, width: 9, height: 9)).fill()
+        }
+        return image.pngData() ?? Data()
     }
 }
 
