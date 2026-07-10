@@ -107,8 +107,11 @@ struct ShareStyleView: View {
     }
 
     private var livePreviewCard: some View {
-        MinimalCardView(session: session, visibleElements: ShareElementsConfig(), showWatermark: false, ratio: selectedRatio.aspectRatio)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+        ShareCardPreview(
+            session: session,
+            config: ShareElementsConfig(),
+            ratio: selectedRatio
+        )
             .shadowCard()
     }
 
@@ -182,7 +185,8 @@ struct ShareStyleView: View {
                             // 缩略图
                             ZStack(alignment: .topTrailing) {
                                 styleThumbnail(for: style)
-                                    .frame(height: 110)
+                                    .aspectRatio(selectedRatio.aspectRatio, contentMode: .fit)
+                                    .frame(maxWidth: .infinity)
                                     .clipShape(RoundedRectangle(cornerRadius: 10))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 10)
@@ -230,7 +234,11 @@ struct ShareStyleView: View {
     private func styleThumbnail(for style: CardStyle) -> some View {
         switch style {
         case .minimal:
-            MinimalCardView(session: session, visibleElements: ShareElementsConfig(), showWatermark: false)
+            ShareCardPreview(
+                session: session,
+                config: ShareElementsConfig(),
+                ratio: selectedRatio
+            )
         case .tech:
             ZStack(alignment: .bottomLeading) {
                 LinearGradient(colors: [Color(hex: "0A0F1C"), Color(hex: "1A3050")],
@@ -241,6 +249,7 @@ struct ShareStyleView: View {
                 }
                 .padding(10)
             }
+            .aspectRatio(selectedRatio.aspectRatio, contentMode: .fit)
         case .sticker:
             ZStack(alignment: .bottomLeading) {
                 Color(hex: "EDE5CE")
@@ -250,11 +259,13 @@ struct ShareStyleView: View {
                 }
                 .padding(10)
             }
+            .aspectRatio(selectedRatio.aspectRatio, contentMode: .fit)
         case .film:
             ZStack {
                 Color(hex: "D4C9A8")
                 RoundedRectangle(cornerRadius: 2).stroke(.white, lineWidth: 5).padding(6)
             }
+            .aspectRatio(selectedRatio.aspectRatio, contentMode: .fit)
         }
     }
 }
@@ -265,4 +276,56 @@ struct ShareStyleView: View {
                        isRecordPresented: .constant(true))
     }
     .modelContainer(for: [FishingSession.self, FishCatch.self], inMemory: true)
+}
+
+/// 分享卡预览图：统一走导出渲染链路，避免小尺寸 SwiftUI 预览和最终图片不一致。
+struct ShareCardPreview: View {
+    let session: FishingSession
+    let config: ShareElementsConfig
+    let ratio: ShareStyleView.CardRatio
+    var showWatermark: Bool = false
+    var cornerRadius: CGFloat = 10
+
+    @State private var previewImage: UIImage?
+
+    private var renderKey: RenderKey {
+        RenderKey(
+            sessionID: session.id,
+            config: config,
+            ratio: ratio.rawValue,
+            showWatermark: showWatermark
+        )
+    }
+
+    var body: some View {
+        ZStack {
+            Theme.Colors.bg2
+
+            if let previewImage {
+                Image(uiImage: previewImage)
+                    .resizable()
+                    .scaledToFit()
+            } else {
+                ProgressView()
+                    .tint(Theme.Colors.accent)
+            }
+        }
+        .aspectRatio(ratio.aspectRatio, contentMode: .fit)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .task(id: renderKey) {
+            previewImage = ImageRenderService.renderCard(
+                session: session,
+                visibleElements: config,
+                showWatermark: showWatermark,
+                ratio: ImageRenderService.CardRatio(ratio)
+            )
+        }
+    }
+
+    private struct RenderKey: Hashable {
+        let sessionID: UUID
+        let config: ShareElementsConfig
+        let ratio: String
+        let showWatermark: Bool
+    }
 }

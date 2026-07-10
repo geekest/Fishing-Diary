@@ -93,9 +93,12 @@ struct ShareElementsView: View {
 
             HStack {
                 Spacer()
-                MinimalCardView(session: session, visibleElements: config, showWatermark: false, ratio: ratio.aspectRatio)
+                ShareCardPreview(
+                    session: session,
+                    config: config,
+                    ratio: ratio
+                )
                     .frame(height: 180)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
                     .shadowCard()
                     .animation(.easeInOut(duration: 0.2), value: config.showFishAndLength)
                     .animation(.easeInOut(duration: 0.2), value: config.showLocation)
