@@ -11,35 +11,91 @@ struct SpeciesPickerSheet: View {
 
     @State private var searchText = ""
 
-    private static let allSpecies: [(name: String, latin: String)] = [
-        ("大口黑鲈", "M. salmoides"),
-        ("鳜鱼", "S. chuatsi"),
-        ("翘嘴鲌", "E. ilishaeformis"),
-        ("鲤鱼", "C. carpio"),
-        ("草鱼", "C. idella"),
-        ("鲫鱼", "C. auratus"),
-        ("黑鱼", "C. argus"),
-        ("罗非鱼", "O. niloticus"),
-        ("尖吻鲈", "L. calcarifer"),
-        ("黄颡鱼", "P. fulvidraco"),
-        ("鲢鱼", "H. molitrix"),
-        ("鳙鱼", "H. nobilis"),
-        ("鲶鱼", "S. asotus"),
-        ("鲻鱼", "M. cephalus"),
-        ("鮻鱼", "L. haematocheila"),
-    ]
+    private struct SpeciesOption: Identifiable {
+        let name: String
+        let latin: String?
 
-    private var recentSpecies: [String] {
-        let all = sessions.flatMap { $0.speciesNames }.filter { !$0.isEmpty }
-        var seen = Set<String>()
-        return all.filter { seen.insert($0).inserted }.prefix(5).map { $0 }
+        var id: String { name }
     }
 
-    private var filteredSpecies: [(name: String, latin: String)] {
-        if searchText.isEmpty { return Self.allSpecies }
-        return Self.allSpecies.filter {
-            $0.name.contains(searchText) || $0.latin.lowercased().contains(searchText.lowercased())
+    private struct SpeciesSection: Identifiable {
+        let title: String
+        let options: [SpeciesOption]
+
+        var id: String { title }
+    }
+
+    private static let freshwaterSpecies: [SpeciesOption] = [
+        SpeciesOption(name: "大口黑鲈", latin: "M. salmoides"),
+        SpeciesOption(name: "鳜鱼", latin: "S. chuatsi"),
+        SpeciesOption(name: "翘嘴鲌", latin: "E. ilishaeformis"),
+        SpeciesOption(name: "鲤鱼", latin: "C. carpio"),
+        SpeciesOption(name: "草鱼", latin: "C. idella"),
+        SpeciesOption(name: "鲫鱼", latin: "C. auratus"),
+        SpeciesOption(name: "黑鱼", latin: "C. argus"),
+        SpeciesOption(name: "罗非鱼", latin: "O. niloticus"),
+        SpeciesOption(name: "黄颡鱼", latin: "P. fulvidraco"),
+        SpeciesOption(name: "鲢鱼", latin: "H. molitrix"),
+        SpeciesOption(name: "鳙鱼", latin: "H. nobilis"),
+        SpeciesOption(name: "鲶鱼", latin: "S. asotus"),
+    ]
+
+    private static let saltwaterSpecies: [SpeciesOption] = [
+        SpeciesOption(name: "鲈鱼", latin: "L. japonicus"),
+        SpeciesOption(name: "尖吻鲈", latin: "L. calcarifer"),
+        SpeciesOption(name: "黑鲷", latin: "A. schlegelii"),
+        SpeciesOption(name: "真鲷", latin: "P. major"),
+        SpeciesOption(name: "石斑鱼", latin: "Epinephelus"),
+        SpeciesOption(name: "马鲛鱼", latin: "Scomberomorus"),
+        SpeciesOption(name: "带鱼", latin: "T. lepturus"),
+        SpeciesOption(name: "鲻鱼", latin: "M. cephalus"),
+        SpeciesOption(name: "鮻鱼", latin: "L. haematocheila"),
+        SpeciesOption(name: "黄鳍鲷", latin: "A. latus"),
+    ]
+
+    private static let commonSpecies = freshwaterSpecies + saltwaterSpecies
+
+    private var recordedSpecies: [String] {
+        orderedRecordedSpecies(limit: nil)
+    }
+
+    private var recentSpecies: [String] {
+        orderedRecordedSpecies(limit: 6)
+    }
+
+    private var normalizedSearchText: String {
+        searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var sections: [SpeciesSection] {
+        if normalizedSearchText.isEmpty {
+            return defaultSections
         }
+
+        let matches = filteredOptions(from: Self.commonSpecies + recordedSpecies.map { SpeciesOption(name: $0, latin: nil) })
+        return matches.isEmpty ? [] : [SpeciesSection(title: "匹配鱼种", options: matches)]
+    }
+
+    private var defaultSections: [SpeciesSection] {
+        var result: [SpeciesSection] = []
+        if !recentSpecies.isEmpty {
+            result.append(SpeciesSection(title: "最近使用", options: recentSpecies.map { SpeciesOption(name: $0, latin: nil) }))
+        }
+        if !recordedSpecies.isEmpty {
+            result.append(SpeciesSection(title: "已记录鱼种", options: recordedSpecies.map { SpeciesOption(name: $0, latin: nil) }))
+        }
+        result.append(SpeciesSection(title: "常见淡水鱼种", options: Self.freshwaterSpecies))
+        result.append(SpeciesSection(title: "常见海水鱼种", options: Self.saltwaterSpecies))
+        return result
+    }
+
+    private var canAddCustomSpecies: Bool {
+        guard !normalizedSearchText.isEmpty else { return false }
+        return !allKnownSpeciesNames.contains { $0.localizedCaseInsensitiveCompare(normalizedSearchText) == .orderedSame }
+    }
+
+    private var allKnownSpeciesNames: [String] {
+        Array(Set(recordedSpecies + Self.commonSpecies.map(\.name)))
     }
 
     var body: some View {
@@ -47,132 +103,17 @@ struct SpeciesPickerSheet: View {
             Theme.Colors.bg.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // 顶部抓手 + 标题
-                VStack(spacing: Theme.Space.md) {
-                    Capsule()
-                        .fill(Theme.Colors.ink3)
-                        .frame(width: 36, height: 5)
-                        .padding(.top, 12)
-
-                    Text("选择鱼种")
-                        .font(Theme.Font.headline)
-                        .foregroundStyle(Theme.Colors.ink)
-                }
-                .padding(.bottom, Theme.Space.md)
-
-                // 搜索框
-                HStack(spacing: Theme.Space.sm) {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundStyle(Theme.Colors.ink3)
-                    TextField("搜索鱼种…", text: $searchText)
-                        .font(Theme.Font.body)
-                        .autocorrectionDisabled()
-                }
-                .padding(.horizontal, Theme.Space.md)
-                .padding(.vertical, 11)
-                .background(Theme.Colors.surface)
-                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.field))
-                .shadowSoft()
-                .padding(.horizontal, Theme.Space.lg)
+                header
+                searchField
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        // 最近使用
-                        if searchText.isEmpty && !recentSpecies.isEmpty {
-                            VStack(alignment: .leading, spacing: Theme.Space.md) {
-                                SectionLabel(text: "最近使用")
-                                    .padding(.horizontal, Theme.Space.lg)
-
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: Theme.Space.sm) {
-                                        ForEach(recentSpecies, id: \.self) { species in
-                                            Button {
-                                                select(species)
-                                            } label: {
-                                                HStack(spacing: 5) {
-                                                    Text("🐟").font(.caption)
-                                                    Text(species).font(Theme.Font.subhead)
-                                                }
-                                                .foregroundStyle(selectedSpecies == species ? .white : Theme.Colors.ink)
-                                                .padding(.horizontal, 12)
-                                                .padding(.vertical, 7)
-                                                .background(selectedSpecies == species ? Theme.Colors.accent : Theme.Colors.chip)
-                                                .clipShape(Capsule())
-                                            }
-                                        }
-                                    }
-                                    .padding(.horizontal, Theme.Space.lg)
-                                }
-                            }
-                            .padding(.vertical, Theme.Space.md)
-
-                            Divider()
-                                .padding(.horizontal, Theme.Space.lg)
-                                .padding(.vertical, Theme.Space.sm)
+                    VStack(alignment: .leading, spacing: Theme.Space.md) {
+                        ForEach(sections) { section in
+                            speciesSection(section)
                         }
 
-                        // 全部鱼种
-                        SectionLabel(text: "全部鱼种")
-                            .padding(.horizontal, Theme.Space.lg)
-                            .padding(.top, Theme.Space.md)
-                            .padding(.bottom, Theme.Space.sm)
-
-                        VStack(spacing: 0) {
-                            ForEach(Array(filteredSpecies.enumerated()), id: \.offset) { i, species in
-                                Button {
-                                    select(species.name)
-                                } label: {
-                                    HStack {
-                                        Text("🐟").font(.title3)
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text(species.name)
-                                                .font(Theme.Font.subhead)
-                                                .fontWeight(.medium)
-                                                .foregroundStyle(Theme.Colors.ink)
-                                            Text(species.latin)
-                                                .font(Theme.Font.microLabel)
-                                                .foregroundStyle(Theme.Colors.ink3)
-                                        }
-                                        Spacer()
-                                        if selectedSpecies == species.name {
-                                            Image(systemName: "checkmark")
-                                                .foregroundStyle(Theme.Colors.accent)
-                                                .fontWeight(.semibold)
-                                        }
-                                    }
-                                    .padding(.horizontal, Theme.Space.lg)
-                                    .padding(.vertical, 13)
-                                    .contentShape(Rectangle())
-                                }
-                                .buttonStyle(.plain)
-
-                                if i < filteredSpecies.count - 1 {
-                                    Divider().padding(.leading, 58)
-                                }
-                            }
-                        }
-                        .background(Theme.Colors.surface)
-                        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.field))
-                        .shadowSoft()
-                        .padding(.horizontal, Theme.Space.lg)
-
-                        // 自定义输入
-                        if !searchText.isEmpty && !filteredSpecies.map(\.name).contains(searchText) {
-                            Button {
-                                select(searchText)
-                            } label: {
-                                HStack {
-                                    Image(systemName: "plus.circle.fill")
-                                        .foregroundStyle(Theme.Colors.accent)
-                                    Text("添加「\(searchText)」")
-                                        .font(Theme.Font.subhead)
-                                        .foregroundStyle(Theme.Colors.accent)
-                                    Spacer()
-                                }
-                                .padding(.horizontal, Theme.Space.lg)
-                                .padding(.vertical, 13)
-                            }
-                            .padding(.top, Theme.Space.sm)
+                        if canAddCustomSpecies {
+                            customSpeciesButton
                         }
                     }
                     .padding(.top, Theme.Space.md)
@@ -184,8 +125,135 @@ struct SpeciesPickerSheet: View {
         .presentationDragIndicator(.hidden)
     }
 
+    private var header: some View {
+        VStack(spacing: Theme.Space.md) {
+            Capsule()
+                .fill(Theme.Colors.ink3)
+                .frame(width: 36, height: 5)
+                .padding(.top, 12)
+
+            Text("选择鱼种")
+                .font(Theme.Font.headline)
+                .foregroundStyle(Theme.Colors.ink)
+        }
+        .padding(.bottom, Theme.Space.md)
+    }
+
+    private var searchField: some View {
+        HStack(spacing: Theme.Space.sm) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(Theme.Colors.ink3)
+            TextField("搜索或输入鱼种…", text: $searchText)
+                .font(Theme.Font.body)
+                .autocorrectionDisabled()
+        }
+        .padding(.horizontal, Theme.Space.md)
+        .padding(.vertical, 11)
+        .background(Theme.Colors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.field))
+        .shadowSoft()
+        .padding(.horizontal, Theme.Space.lg)
+    }
+
+    private var customSpeciesButton: some View {
+        Button {
+            select(normalizedSearchText)
+        } label: {
+            HStack {
+                Image(systemName: "plus.circle.fill")
+                    .foregroundStyle(Theme.Colors.accent)
+                Text("添加「\(normalizedSearchText)」")
+                    .font(Theme.Font.subhead)
+                    .foregroundStyle(Theme.Colors.accent)
+                Spacer()
+            }
+            .padding(.horizontal, Theme.Space.lg)
+            .padding(.vertical, 13)
+            .background(Theme.Colors.surface)
+            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.field))
+            .shadowSoft()
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, Theme.Space.lg)
+    }
+
+    private func speciesSection(_ section: SpeciesSection) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Space.sm) {
+            SectionLabel(text: section.title)
+                .padding(.horizontal, Theme.Space.lg)
+
+            VStack(spacing: 0) {
+                ForEach(Array(section.options.enumerated()), id: \.element.id) { index, species in
+                    speciesRow(species)
+
+                    if index < section.options.count - 1 {
+                        Divider().padding(.leading, 58)
+                    }
+                }
+            }
+            .background(Theme.Colors.surface)
+            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.field))
+            .shadowSoft()
+            .padding(.horizontal, Theme.Space.lg)
+        }
+    }
+
+    private func speciesRow(_ species: SpeciesOption) -> some View {
+        Button {
+            select(species.name)
+        } label: {
+            HStack {
+                Text("🐟").font(.title3)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(species.name)
+                        .font(Theme.Font.subhead)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Theme.Colors.ink)
+                    if let latin = species.latin {
+                        Text(latin)
+                            .font(Theme.Font.microLabel)
+                            .foregroundStyle(Theme.Colors.ink3)
+                    }
+                }
+                Spacer()
+                if selectedSpecies == species.name {
+                    Image(systemName: "checkmark")
+                        .foregroundStyle(Theme.Colors.accent)
+                        .fontWeight(.semibold)
+                }
+            }
+            .padding(.horizontal, Theme.Space.lg)
+            .padding(.vertical, 13)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func filteredOptions(from options: [SpeciesOption]) -> [SpeciesOption] {
+        var seen = Set<String>()
+        return options.filter { option in
+            let matchesName = option.name.localizedCaseInsensitiveContains(normalizedSearchText)
+            let matchesLatin = option.latin?.localizedCaseInsensitiveContains(normalizedSearchText) ?? false
+            return (matchesName || matchesLatin) && seen.insert(option.name).inserted
+        }
+    }
+
+    private func orderedRecordedSpecies(limit: Int?) -> [String] {
+        var seen = Set<String>()
+        let names = sessions.flatMap { session in
+            session.catches
+                .sorted { $0.sortIndex < $1.sortIndex }
+                .map { $0.speciesName.trimmingCharacters(in: .whitespacesAndNewlines) }
+        }
+        let uniqueNames = names.filter { !$0.isEmpty && seen.insert($0).inserted }
+        if let limit {
+            return Array(uniqueNames.prefix(limit))
+        }
+        return uniqueNames
+    }
+
     private func select(_ species: String) {
-        selectedSpecies = species
+        selectedSpecies = species.trimmingCharacters(in: .whitespacesAndNewlines)
         isPresented = false
     }
 }
