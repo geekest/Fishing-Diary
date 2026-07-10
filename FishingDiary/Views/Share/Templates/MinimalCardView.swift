@@ -6,6 +6,7 @@ struct MinimalCardView: View {
     let session: FishingSession
     let visibleElements: ShareElementsConfig
     var showWatermark: Bool = false  // 付费后去水印
+    var style: ShareStyleView.CardStyle = .minimal
     var ratio: CGFloat = 3.0/4.0
 
     private var firstCatch: FishCatch? { session.catches.min(by: { $0.sortIndex < $1.sortIndex }) }
@@ -28,35 +29,203 @@ struct MinimalCardView: View {
 
     var body: some View {
         GeometryReader { geo in
-            ZStack(alignment: .bottomLeading) {
-                // 模糊背景
-                background(in: geo.size)
-
-                // 白描边鱼贴纸（浮于背景之上）
-                stickerLayer(in: geo.size)
-
-                // 渐变蒙层
-                LinearGradient(
-                    colors: [.clear, .clear, .black.opacity(0.75)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-
-                // 主内容
-                VStack(alignment: .leading, spacing: 0) {
-                    Spacer()
-                    mainContent(in: geo.size)
-                    if showWatermark { watermarkBadge(in: geo.size) }
-                }
-                .padding(geo.size.width * 0.06)
-
-                // 顶部水印（未付费）
-                if showWatermark { topWatermark(in: geo.size) }
-            }
+            templateContent(in: geo.size)
         }
         .aspectRatio(ratio, contentMode: .fit)
         .background(Color.black)
         .clipShape(RoundedRectangle(cornerRadius: 0))
+    }
+
+    @ViewBuilder
+    private func templateContent(in size: CGSize) -> some View {
+        switch style {
+        case .minimal:
+            minimalTemplate(in: size)
+        case .tech:
+            techTemplate(in: size)
+        case .sticker:
+            stickerTemplate(in: size)
+        case .film:
+            filmTemplate(in: size)
+        }
+    }
+
+    private func minimalTemplate(in size: CGSize) -> some View {
+        ZStack(alignment: .bottomLeading) {
+            background(in: size)
+            stickerLayer(in: size)
+            LinearGradient(
+                colors: [.clear, .clear, .black.opacity(0.75)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            VStack(alignment: .leading, spacing: 0) {
+                Spacer()
+                mainContent(in: size)
+                if showWatermark { watermarkBadge(in: size) }
+            }
+            .padding(size.width * 0.06)
+
+            if showWatermark { topWatermark(in: size) }
+        }
+    }
+
+    private func techTemplate(in size: CGSize) -> some View {
+        let metrics = CardMetrics(size: size)
+
+        return ZStack(alignment: .bottomLeading) {
+            LinearGradient(
+                colors: [Color(hex: "06111D"), Color(hex: "123B4A"), Color(hex: "041016")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            background(in: size)
+                .opacity(0.22)
+                .saturation(0.65)
+            stickerLayer(in: size)
+                .opacity(0.88)
+            LinearGradient(colors: [.clear, .black.opacity(0.72)], startPoint: .center, endPoint: .bottom)
+
+            VStack(alignment: .leading, spacing: metrics.contentSpacing * 1.4) {
+                HStack {
+                    Text("FISHING DATA")
+                        .font(.system(size: metrics.metaFont * 1.2, weight: .semibold, design: .monospaced))
+                        .tracking(metrics.metaTracking * 2)
+                    Spacer()
+                    Text(session.date.formatted(.dateTime.month(.twoDigits).day(.twoDigits)))
+                        .font(.system(size: metrics.metaFont, weight: .medium, design: .monospaced))
+                }
+                .foregroundStyle(Color(hex: "7FE9FF"))
+
+                Spacer()
+
+                if visibleElements.showFishAndLength, let catch_ = firstCatch {
+                    Text(catch_.speciesName.isEmpty ? "UNKNOWN CATCH" : catch_.speciesName.uppercased())
+                        .font(.system(size: metrics.subtitleFont * 1.4, weight: .bold, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.88))
+                    HStack(alignment: .lastTextBaseline, spacing: metrics.numberSpacing) {
+                        Text("\(Int(catch_.lengthCm ?? 0))")
+                            .font(.system(size: metrics.lengthFont * 1.15, weight: .black, design: .monospaced))
+                            .foregroundStyle(.white)
+                        Text("CM")
+                            .font(.system(size: metrics.unitFont, weight: .bold, design: .monospaced))
+                            .foregroundStyle(Color(hex: "7FE9FF"))
+                    }
+                }
+
+                Divider().overlay(Color(hex: "7FE9FF").opacity(0.55))
+                envDataRow(in: metrics)
+            }
+            .padding(size.width * 0.06)
+        }
+    }
+
+    private func stickerTemplate(in size: CGSize) -> some View {
+        let metrics = CardMetrics(size: size)
+
+        return ZStack(alignment: .bottomLeading) {
+            Color(hex: "EFE4C8")
+            Circle()
+                .fill(Color(hex: "F9C74F").opacity(0.55))
+                .frame(width: size.width * 0.65)
+                .offset(x: size.width * 0.46, y: -size.height * 0.34)
+            RoundedRectangle(cornerRadius: size.width * 0.03)
+                .fill(.white.opacity(0.78))
+                .rotationEffect(.degrees(-4))
+                .padding(size.width * 0.08)
+
+            if let sticker = fishSticker {
+                Image(uiImage: sticker)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: size.width * 0.9, height: size.height * 0.72)
+                    .offset(x: size.width * 0.09, y: -size.height * 0.08)
+            } else {
+                stickerLayer(in: size)
+            }
+
+            VStack(alignment: .leading, spacing: metrics.contentSpacing * 1.2) {
+                HStack {
+                    Text("今日战果")
+                        .font(.system(size: metrics.subtitleFont * 1.6, weight: .black))
+                    Spacer()
+                    Text(session.date.formatted(.dateTime.month(.twoDigits).day(.twoDigits)))
+                        .font(.system(size: metrics.metaFont, weight: .bold, design: .monospaced))
+                }
+                .foregroundStyle(Color(hex: "3C3422"))
+
+                Spacer()
+
+                if visibleElements.showFishAndLength, let catch_ = firstCatch {
+                    Text(catch_.speciesName.isEmpty ? "未知渔获" : catch_.speciesName)
+                        .font(.system(size: metrics.subtitleFont * 1.25, weight: .bold))
+                        .foregroundStyle(Color(hex: "3C3422").opacity(0.78))
+                    HStack(alignment: .lastTextBaseline, spacing: metrics.numberSpacing) {
+                        Text("\(Int(catch_.lengthCm ?? 0))")
+                            .font(.system(size: metrics.lengthFont, weight: .black))
+                            .foregroundStyle(Color(hex: "1F6F5C"))
+                        Text("cm")
+                            .font(.system(size: metrics.unitFont, weight: .heavy))
+                            .foregroundStyle(Color(hex: "3C3422"))
+                    }
+                }
+
+                envDataRow(in: metrics)
+                    .foregroundStyle(Color(hex: "3C3422"))
+            }
+            .padding(size.width * 0.07)
+        }
+    }
+
+    private func filmTemplate(in size: CGSize) -> some View {
+        let metrics = CardMetrics(size: size)
+
+        return ZStack(alignment: .bottomLeading) {
+            Color(hex: "191511")
+            background(in: size)
+                .padding(size.width * 0.07)
+                .saturation(0.78)
+                .contrast(1.12)
+            stickerLayer(in: size)
+                .padding(size.width * 0.04)
+            RoundedRectangle(cornerRadius: 1)
+                .stroke(.white.opacity(0.82), lineWidth: size.width * 0.012)
+                .padding(size.width * 0.055)
+            LinearGradient(colors: [.clear, .black.opacity(0.76)], startPoint: .center, endPoint: .bottom)
+
+            VStack(alignment: .leading, spacing: metrics.contentSpacing) {
+                HStack {
+                    Text("FISHING DIARY")
+                    Spacer()
+                    Text(session.date.formatted(.dateTime.year().month(.twoDigits).day(.twoDigits)))
+                }
+                .font(.system(size: metrics.metaFont, weight: .medium, design: .monospaced))
+                .tracking(metrics.metaTracking)
+                .foregroundStyle(Color(hex: "F3E4C7"))
+
+                Spacer()
+
+                if visibleElements.showFishAndLength, let catch_ = firstCatch {
+                    Text(catch_.speciesName.isEmpty ? "未知钓点" : catch_.speciesName)
+                        .font(.system(size: metrics.subtitleFont * 1.2, weight: .semibold))
+                        .foregroundStyle(Color(hex: "F3E4C7"))
+                    HStack(alignment: .lastTextBaseline, spacing: metrics.numberSpacing) {
+                        Text("\(Int(catch_.lengthCm ?? 0))")
+                            .font(.system(size: metrics.lengthFont * 0.95, weight: .bold, design: .serif))
+                            .foregroundStyle(.white)
+                        Text("cm")
+                            .font(.system(size: metrics.unitFont, weight: .medium, design: .serif))
+                            .foregroundStyle(Color(hex: "F3E4C7"))
+                    }
+                }
+
+                Divider().overlay(Color(hex: "F3E4C7").opacity(0.45))
+                envDataRow(in: metrics)
+                    .foregroundStyle(Color(hex: "F3E4C7"))
+            }
+            .padding(size.width * 0.08)
+        }
     }
 
     // MARK: - 背景

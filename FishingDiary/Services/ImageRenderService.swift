@@ -36,6 +36,7 @@ struct ImageRenderService {
         session: FishingSession,
         visibleElements: ShareElementsConfig,
         showWatermark: Bool = false,
+        style: ShareStyleView.CardStyle = .minimal,
         ratio: CardRatio = .threeByFour
     ) -> UIImage {
         let size = ratio.size
@@ -43,6 +44,7 @@ struct ImageRenderService {
             session: session,
             visibleElements: visibleElements,
             showWatermark: showWatermark,
+            style: style,
             ratio: ratio.aspectRatio
         )
             .frame(width: size.width, height: size.height)
@@ -57,11 +59,12 @@ struct ImageRenderService {
     static func renderThumbnail(
         session: FishingSession,
         visibleElements: ShareElementsConfig,
+        style: ShareStyleView.CardStyle = .minimal,
         width: CGFloat = 300
     ) -> UIImage {
         let ratio: CGFloat = 4.0 / 3.0
         let size = CGSize(width: width, height: width * ratio)
-        let view = MinimalCardView(session: session, visibleElements: visibleElements)
+        let view = MinimalCardView(session: session, visibleElements: visibleElements, style: style)
             .frame(width: size.width, height: size.height)
 
         let renderer = ImageRenderer(content: view)

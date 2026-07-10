@@ -4,11 +4,12 @@ import SwiftUI
 struct PreviewExportView: View {
     let session: FishingSession
     let config: ShareElementsConfig
+    let style: ShareStyleView.CardStyle
     let ratio: ShareStyleView.CardRatio
     @Binding var isRecordPresented: Bool
 
     @EnvironmentObject var purchaseService: PurchaseService
-    @State private var showPaywall = true
+    @State private var showPaywall = false
     @State private var showShareSheet = false
     @State private var renderedImage: UIImage? = nil
     @State private var showSaveToast = false
@@ -25,6 +26,7 @@ struct PreviewExportView: View {
             ShareCardPreview(
                 session: session,
                 config: config,
+                style: style,
                 ratio: ratio,
                 showWatermark: !purchaseService.isPurchased,
                 cornerRadius: 0
@@ -230,6 +232,7 @@ struct PreviewExportView: View {
             let img = ImageRenderService.renderCard(
                 session: session,
                 visibleElements: config,
+                style: style,
                 ratio: ImageRenderService.CardRatio(ratio)
             )
             renderedImage = img
@@ -261,6 +264,7 @@ struct ShareSheet: UIViewControllerRepresentable {
         PreviewExportView(
             session: FishingSession(date: .now, locationName: "千岛湖"),
             config: ShareElementsConfig(),
+            style: .minimal,
             ratio: .threeByFour,
             isRecordPresented: .constant(true)
         )
