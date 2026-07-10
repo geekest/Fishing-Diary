@@ -36,6 +36,9 @@ struct ShareStyleView: View {
         case tech    = "户外科技风"
         case sticker = "抠图贴纸墙"
         case film    = "胶片复古"
+        case magazine = "钓场杂志"
+        case poster   = "战报海报"
+        case specimen = "标本档案"
         var id: String { rawValue }
         var isFree: Bool { true }
         var badge: String { self == .minimal ? "FREE" : "已解锁" }
@@ -233,6 +236,12 @@ struct ShareStyleView: View {
         case .sticker:
             ShareCardPreview(session: session, config: ShareElementsConfig(), style: style, ratio: selectedRatio)
         case .film:
+            ShareCardPreview(session: session, config: ShareElementsConfig(), style: style, ratio: selectedRatio)
+        case .magazine:
+            ShareCardPreview(session: session, config: ShareElementsConfig(), style: style, ratio: selectedRatio)
+        case .poster:
+            ShareCardPreview(session: session, config: ShareElementsConfig(), style: style, ratio: selectedRatio)
+        case .specimen:
             ShareCardPreview(session: session, config: ShareElementsConfig(), style: style, ratio: selectedRatio)
         }
     }

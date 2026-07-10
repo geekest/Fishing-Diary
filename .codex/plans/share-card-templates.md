@@ -89,11 +89,11 @@
 - [x] 确认当前模板调用链
 - [x] 完成 Milestone 1
 - [x] 运行 Milestone 1 构建验证
-- [ ] 提交 Milestone 1
-- [ ] 完成 Milestone 2
-- [ ] 运行最终验证
+- [x] 提交 Milestone 1
+- [x] 完成 Milestone 2
+- [x] 运行最终验证
 - [ ] 提交并推送 Milestone 2
-- [ ] 补充复盘
+- [x] 补充复盘
 
 ## 8. 新发现与意外情况
 
@@ -127,4 +127,25 @@
 
 ## 12. 最终结果与复盘
 
-待完成后补充。
+- 实际完成：
+  - 默认用户视为已付费用户。
+  - 现有 `tech`、`sticker`、`film` 模板可选择、预览和导出。
+  - 新增 `magazine`、`poster`、`specimen` 3 个模板方向。
+  - `style` 参数已贯穿选择页、元素页、预览页和导出服务。
+- 与原计划不同：
+  - 模板实现暂时保留在 `MinimalCardView.swift`，未拆分新文件，避免重新生成 Xcode 工程。
+- 修改文件：
+  - `.codex/plans/share-card-templates.md`
+  - `FishingDiary/Services/PurchaseService.swift`
+  - `FishingDiary/Services/ImageRenderService.swift`
+  - `FishingDiary/Views/Share/ShareElementsView.swift`
+  - `FishingDiary/Views/Share/PreviewExportView.swift`
+  - `FishingDiary/Views/Share/ShareStyleView.swift`
+  - `FishingDiary/Views/Share/Templates/MinimalCardView.swift`
+- 验证：
+  - `git diff --check`
+  - iPhone 17 模拟器 Debug 构建
+- 未验证：
+  - 未用 XcodeBuildMCP 启动模拟器逐个截图检查视觉细节。
+- 后续任务：
+  - 需要在模拟器里逐个模板查看视觉质量，再微调字号、图片裁切和信息密度。
