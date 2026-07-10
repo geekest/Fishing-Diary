@@ -5,13 +5,28 @@ import UIKit
 struct ImageRenderService {
 
     enum CardRatio {
-        case threeByFour   // 3:4 小红书（MVP 唯一画幅）
-        // TODO: Phase 2 添加 oneByOne / nineByteen
+        case threeByFour   // 3:4 小红书
+        case oneByOne      // 1:1 朋友圈
+        case nineByteen    // 9:16 故事
+
+        init(_ ratio: ShareStyleView.CardRatio) {
+            switch ratio {
+            case .threeByFour: self = .threeByFour
+            case .oneByOne: self = .oneByOne
+            case .nineByteen: self = .nineByteen
+            }
+        }
 
         var size: CGSize {
             switch self {
             case .threeByFour: return CGSize(width: 1080, height: 1440)
+            case .oneByOne: return CGSize(width: 1080, height: 1080)
+            case .nineByteen: return CGSize(width: 1080, height: 1920)
             }
+        }
+
+        var aspectRatio: CGFloat {
+            size.width / size.height
         }
     }
 
@@ -23,7 +38,7 @@ struct ImageRenderService {
         ratio: CardRatio = .threeByFour
     ) -> UIImage {
         let size = ratio.size
-        let view = MinimalCardView(session: session, visibleElements: visibleElements)
+        let view = MinimalCardView(session: session, visibleElements: visibleElements, ratio: ratio.aspectRatio)
             .frame(width: size.width, height: size.height)
 
         let renderer = ImageRenderer(content: view)
@@ -48,9 +63,28 @@ struct ImageRenderService {
         return renderer.uiImage ?? UIImage()
     }
 
-    /// 保存到相册
-    static func saveToPhotoLibrary(_ image: UIImage) {
-        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+    /// 保存到相册，并返回系统保存结果
+    static func saveToPhotoLibrary(_ image: UIImage, completion: @escaping (Bool) -> Void) {
+        PhotoLibrarySaveHandler.shared.completion = completion
+        UIImageWriteToSavedPhotosAlbum(
+            image,
+            PhotoLibrarySaveHandler.shared,
+            #selector(PhotoLibrarySaveHandler.image(_:didFinishSavingWithError:contextInfo:)),
+            nil
+        )
+    }
+}
+
+private final class PhotoLibrarySaveHandler: NSObject {
+    static let shared = PhotoLibrarySaveHandler()
+    var completion: ((Bool) -> Void)?
+
+    @objc func image(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
+        let success = error == nil
+        DispatchQueue.main.async { [completion] in
+            completion?(success)
+        }
+        completion = nil
     }
 }
 
