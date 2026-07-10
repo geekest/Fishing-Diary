@@ -309,20 +309,13 @@ struct EnvDataView: View {
     private func locateNow() {
         locating = true
         locator.fetch { loc in
-            DispatchQueue.main.async {
-                guard let loc = loc else {
-                    locating = false
-                    return
-                }
-                recordSession.latitude = loc.coordinate.latitude
-                recordSession.longitude = loc.coordinate.longitude
-                CLGeocoder().reverseGeocodeLocation(loc) { placemarks, _ in
-                    if let p = placemarks?.first {
-                        let parts = [p.locality, p.subLocality, p.name].compactMap { $0 }
-                        let name = parts.prefix(2).joined(separator: " · ")
-                        if !name.isEmpty { recordSession.locationName = name }
-                    }
-                    locating = false
+            Task { @MainActor in
+                defer { locating = false }
+                guard let loc else { return }
+
+                applyLocation(loc)
+                if let name = await reverseGeocodeName(for: loc) {
+                    recordSession.locationName = name
                 }
             }
         }
@@ -331,18 +324,54 @@ struct EnvDataView: View {
     // MARK: - 加载天气（默认带入，可编辑）
     private func loadWeather() async {
         let mockLocation = CLLocation(latitude: 29.6, longitude: 119.0)
-        let weather = await WeatherService.shared.fetchCurrent(for: mockLocation)
+        let currentLocation = await fetchCurrentLocation()
+        let weatherLocation = currentLocation ?? mockLocation
+        let weather = await WeatherService.shared.fetchCurrent(for: weatherLocation)
+
         if recordSession.weather == nil {
             recordSession.weather = weather
         }
-        if recordSession.locationName.isEmpty {
+
+        applyLocation(weatherLocation)
+
+        if let currentLocation, let name = await reverseGeocodeName(for: currentLocation) {
+            recordSession.locationName = name
+        } else if recordSession.locationName.isEmpty {
+            // 定位失败或反地理编码失败时，保留可编辑兜底地点，避免阻塞记录流程。
             recordSession.locationName = "千岛湖 · 大坝南"
         }
-        if recordSession.latitude == nil || recordSession.longitude == nil {
-            recordSession.latitude = mockLocation.coordinate.latitude
-            recordSession.longitude = mockLocation.coordinate.longitude
-        }
+
         isLoading = false
+    }
+
+    private func fetchCurrentLocation() async -> CLLocation? {
+        await withCheckedContinuation { continuation in
+            locator.fetch { loc in
+                continuation.resume(returning: loc)
+            }
+        }
+    }
+
+    private func applyLocation(_ location: CLLocation) {
+        recordSession.latitude = location.coordinate.latitude
+        recordSession.longitude = location.coordinate.longitude
+    }
+
+    private func reverseGeocodeName(for location: CLLocation) async -> String? {
+        await withCheckedContinuation { continuation in
+            CLGeocoder().reverseGeocodeLocation(location) { placemarks, _ in
+                guard let placemark = placemarks?.first else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+
+                let parts = [placemark.locality, placemark.subLocality, placemark.name]
+                    .compactMap { $0 }
+                    .filter { !$0.isEmpty }
+                let name = parts.prefix(2).joined(separator: " · ")
+                continuation.resume(returning: name.isEmpty ? nil : name)
+            }
+        }
     }
 }
 
@@ -355,6 +384,7 @@ private func trimNumber(_ v: Double) -> String {
 final class OneShotLocation: NSObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     private var completion: ((CLLocation?) -> Void)?
+    private var timeoutWorkItem: DispatchWorkItem?
 
     override init() {
         super.init()
@@ -364,6 +394,13 @@ final class OneShotLocation: NSObject, CLLocationManagerDelegate {
 
     func fetch(_ completion: @escaping (CLLocation?) -> Void) {
         self.completion = completion
+
+        let timeout = DispatchWorkItem { [weak self] in
+            self?.finish(nil)
+        }
+        timeoutWorkItem = timeout
+        DispatchQueue.main.asyncAfter(deadline: .now() + 8, execute: timeout)
+
         switch manager.authorizationStatus {
         case .notDetermined:
             manager.requestWhenInUseAuthorization()
@@ -375,6 +412,8 @@ final class OneShotLocation: NSObject, CLLocationManagerDelegate {
     }
 
     private func finish(_ loc: CLLocation?) {
+        timeoutWorkItem?.cancel()
+        timeoutWorkItem = nil
         completion?(loc)
         completion = nil
     }
