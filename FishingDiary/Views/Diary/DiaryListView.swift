@@ -9,6 +9,7 @@ struct DiaryListView: View {
 
     @State private var filterSpecies: String? = nil
     @State private var dateFilter: DiaryDateFilter = .all
+    @State private var showsDateFilter = false
     @AppStorage("diaryGridMode") private var isGrid = false
 
     private var filteredSessions: [FishingSession] {
@@ -29,6 +30,17 @@ struct DiaryListView: View {
 
     private var availableDays: [Date] {
         uniqueDates(matching: [.year, .month, .day])
+    }
+
+    private var calendarDays: [Date] {
+        guard let newest = availableDays.first, let oldest = availableDays.last else { return [] }
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: oldest)
+        let end = calendar.startOfDay(for: newest)
+        let dayCount = calendar.dateComponents([.day], from: start, to: end).day ?? 0
+        return (0...dayCount).compactMap { offset in
+            calendar.date(byAdding: .day, value: -offset, to: end)
+        }
     }
 
     /// 时间线展示单元：一尾鱼 + 其所属的出钓
@@ -80,7 +92,7 @@ struct DiaryListView: View {
                 }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
-                dateFilterMenu
+                dateFilterButton
             }
         }
     }
@@ -134,59 +146,190 @@ struct DiaryListView: View {
         }
     }
 
-    // MARK: - 日期筛选菜单
-    private var dateFilterMenu: some View {
-        Menu {
-            Button {
-                dateFilter = .all
-                filterSpecies = nil
-            } label: {
-                Label("全部日期", systemImage: dateFilter == .all ? "checkmark" : "calendar")
-            }
-
-            if !availableDays.isEmpty {
-                Section("按日期") {
-                    ForEach(availableDays, id: \.self) { day in
-                        Button {
-                            dateFilter = .day(day)
-                            filterSpecies = nil
-                        } label: {
-                            Label(dayLabel(day), systemImage: dateFilter.isSameDay(day) ? "checkmark" : "calendar.day.timeline.left")
-                        }
-                    }
-                }
-            }
-
-            if !availableMonths.isEmpty {
-                Section("按月份") {
-                    ForEach(availableMonths, id: \.self) { month in
-                        Button {
-                            dateFilter = .month(month)
-                            filterSpecies = nil
-                        } label: {
-                            Label(monthLabel(month), systemImage: dateFilter.isSameMonth(month) ? "checkmark" : "calendar")
-                        }
-                    }
-                }
-            }
-
-            if !availableYears.isEmpty {
-                Section("按年份") {
-                    ForEach(availableYears, id: \.self) { year in
-                        Button {
-                            dateFilter = .year(year)
-                            filterSpecies = nil
-                        } label: {
-                            Label("\(year) 年", systemImage: dateFilter == .year(year) ? "checkmark" : "calendar")
-                        }
-                    }
-                }
-            }
+    // MARK: - 日期筛选入口
+    private var dateFilterButton: some View {
+        Button {
+            showsDateFilter = true
         } label: {
             Text("\(dateFilter.title) ▾")
                 .font(Theme.Font.subhead)
                 .foregroundStyle(Theme.Colors.ink2)
         }
+        .popover(isPresented: $showsDateFilter) {
+            dateFilterPanel
+                .presentationCompactAdaptation(.sheet)
+        }
+    }
+
+    private var dateFilterPanel: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.lg) {
+            HStack {
+                Text("筛选日期")
+                    .font(Theme.Font.headline)
+                    .foregroundStyle(Theme.Colors.ink)
+                Spacer()
+                Button("完成") {
+                    showsDateFilter = false
+                }
+                .font(Theme.Font.subhead)
+                .foregroundStyle(Theme.Colors.accent)
+            }
+
+            Button {
+                dateFilter = .all
+                filterSpecies = nil
+            } label: {
+                HStack(spacing: Theme.Space.sm) {
+                    Image(systemName: dateFilter == .all ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(dateFilter == .all ? Theme.Colors.accent : Theme.Colors.ink3)
+                    Text("全部日期")
+                        .font(Theme.Font.subhead)
+                        .foregroundStyle(Theme.Colors.ink)
+                    Spacer()
+                }
+            }
+            .buttonStyle(.plain)
+
+            if !availableDays.isEmpty {
+                filterSectionTitle("按日期")
+                dayCalendarStrip
+            }
+
+            if !availableMonths.isEmpty {
+                filterSectionTitle("按月份")
+                wheelOrSingleOption(
+                    title: "月份",
+                    values: availableMonths,
+                    selection: selectedMonthBinding,
+                    label: monthLabel
+                )
+            }
+
+            if !availableYears.isEmpty {
+                filterSectionTitle("按年份")
+                wheelOrSingleOption(
+                    title: "年份",
+                    values: availableYears,
+                    selection: selectedYearBinding,
+                    label: { "\($0) 年" }
+                )
+            }
+        }
+        .padding(Theme.Space.lg)
+        .frame(width: 340)
+        .background(Theme.Colors.surface)
+    }
+
+    private func filterSectionTitle(_ title: String) -> some View {
+        Text(title)
+            .font(Theme.Font.caption)
+            .foregroundStyle(Theme.Colors.ink3)
+    }
+
+    private var dayCalendarStrip: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: Theme.Space.sm) {
+                ForEach(calendarDays, id: \.self) { day in
+                    dayCalendarCell(day)
+                }
+            }
+            .padding(.vertical, Theme.Space.xs)
+        }
+    }
+
+    private func dayCalendarCell(_ day: Date) -> some View {
+        let hasRecord = hasSession(on: day)
+        let isSelected = dateFilter.isSameDay(day)
+        return Button {
+            guard hasRecord else { return }
+            dateFilter = .day(day)
+            filterSpecies = nil
+        } label: {
+            VStack(spacing: 6) {
+                Text(weekdayLabel(day))
+                    .font(Theme.Font.microLabel)
+                    .foregroundStyle(isSelected ? .white.opacity(0.85) : Theme.Colors.ink3)
+                Text(dayNumberLabel(day))
+                    .font(Theme.Font.headline)
+                    .foregroundStyle(isSelected ? .white : (hasRecord ? Theme.Colors.ink : Theme.Colors.ink3))
+                Circle()
+                    .fill(hasRecord ? (isSelected ? .white : Theme.Colors.accent) : Color.clear)
+                    .frame(width: 5, height: 5)
+            }
+            .frame(width: 58, height: 72)
+            .background(isSelected ? Theme.Colors.accent : Theme.Colors.bg2)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .opacity(hasRecord ? 1 : 0.55)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(dayLabel(day))
+        .disabled(!hasRecord)
+    }
+
+    private func wheelOrSingleOption<Value: Hashable>(
+        title: String,
+        values: [Value],
+        selection: Binding<Value>,
+        label: @escaping (Value) -> String
+    ) -> some View {
+        Group {
+            if values.count > 1 {
+                Picker(title, selection: selection) {
+                    ForEach(values, id: \.self) { value in
+                        Text(label(value)).tag(value)
+                    }
+                }
+                .pickerStyle(.wheel)
+                .frame(height: 112)
+                .clipped()
+            } else if let value = values.first {
+                Button {
+                    selection.wrappedValue = value
+                } label: {
+                    HStack {
+                        Text(label(value))
+                            .font(Theme.Font.subhead)
+                            .foregroundStyle(Theme.Colors.ink)
+                        Spacer()
+                        Image(systemName: "checkmark")
+                            .foregroundStyle(Theme.Colors.accent)
+                    }
+                    .padding(.horizontal, Theme.Space.md)
+                    .padding(.vertical, Theme.Space.sm)
+                    .background(Theme.Colors.bg2)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .onChange(of: selection.wrappedValue) { _, _ in
+            filterSpecies = nil
+        }
+    }
+
+    private var selectedMonthBinding: Binding<Date> {
+        Binding(
+            get: {
+                if case .month(let month) = dateFilter,
+                   let availableMonth = availableMonths.first(where: { Calendar.current.isDate($0, equalTo: month, toGranularity: .month) }) {
+                    return availableMonth
+                }
+                return availableMonths.first ?? .now
+            },
+            set: { dateFilter = .month($0) }
+        )
+    }
+
+    private var selectedYearBinding: Binding<Int> {
+        Binding(
+            get: {
+                if case .year(let year) = dateFilter, availableYears.contains(year) {
+                    return year
+                }
+                return availableYears.first ?? Calendar.current.component(.year, from: .now)
+            },
+            set: { dateFilter = .year($0) }
+        )
     }
 
     // MARK: - 无筛选结果
@@ -323,6 +466,23 @@ struct DiaryListView: View {
     private func dayLabel(_ date: Date) -> String {
         let fmt = DateFormatter()
         fmt.dateFormat = "yyyy年M月d日"
+        return fmt.string(from: date)
+    }
+
+    private func hasSession(on date: Date) -> Bool {
+        availableDays.contains { Calendar.current.isDate($0, inSameDayAs: date) }
+    }
+
+    private func weekdayLabel(_ date: Date) -> String {
+        let fmt = DateFormatter()
+        fmt.locale = Locale(identifier: "zh_CN")
+        fmt.dateFormat = "E"
+        return fmt.string(from: date)
+    }
+
+    private func dayNumberLabel(_ date: Date) -> String {
+        let fmt = DateFormatter()
+        fmt.dateFormat = "d"
         return fmt.string(from: date)
     }
 }
