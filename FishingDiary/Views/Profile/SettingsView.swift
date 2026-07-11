@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsView: View {
     @AppStorage("userName") private var userName: String = "钓鱼人"
     @AppStorage("defaultWeightUnit") private var defaultWeightUnitRaw = WeightUnit.kg.rawValue
+    @AppStorage("appLanguage") private var appLanguageRaw = AppLanguage.simplifiedChinese.rawValue
 
     private var defaultWeightUnit: Binding<WeightUnit> {
         Binding(
@@ -20,6 +21,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: Theme.Space.xl) {
                     profileSection
                     unitSection
+                    languageSection
                     legalSection
                 }
                 .padding(.horizontal, Theme.Space.lg)
@@ -65,6 +67,20 @@ struct SettingsView: View {
         }
     }
 
+    private var languageSection: some View {
+        settingsCard(title: "语言") {
+            NavigationLink {
+                LanguageSettingsView(selectedLanguageRaw: $appLanguageRaw)
+            } label: {
+                settingsRow(icon: "globe", title: "应用语言", trailing: currentLanguage.nativeName)
+            }
+        }
+    }
+
+    private var currentLanguage: AppLanguage {
+        AppLanguage(rawValue: appLanguageRaw) ?? .simplifiedChinese
+    }
+
     private var legalSection: some View {
         settingsCard(title: "隐私与协议") {
             VStack(spacing: 0) {
@@ -85,7 +101,11 @@ struct SettingsView: View {
 
     private func settingsCard<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: Theme.Space.md) {
-            SectionLabel(text: title)
+            Text(LocalizedStringKey(title.uppercased()))
+                .font(Theme.Font.microLabel)
+                .kerning(1.2)
+                .foregroundStyle(Theme.Colors.ink3)
+                .frame(maxWidth: .infinity, alignment: .leading)
             content()
                 .padding(Theme.Space.md)
                 .background(Theme.Colors.surface)
@@ -94,7 +114,7 @@ struct SettingsView: View {
         }
     }
 
-    private func settingsRow(icon: String, title: String) -> some View {
+    private func settingsRow(icon: String, title: LocalizedStringKey, trailing: String? = nil) -> some View {
         HStack(spacing: Theme.Space.md) {
             Image(systemName: icon)
                 .font(.system(size: 15))
@@ -104,6 +124,11 @@ struct SettingsView: View {
                 .font(Theme.Font.subhead)
                 .foregroundStyle(Theme.Colors.ink)
             Spacer()
+            if let trailing {
+                Text(trailing)
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Colors.ink3)
+            }
             Image(systemName: "chevron.right")
                 .font(.caption)
                 .foregroundStyle(Theme.Colors.ink3)
@@ -113,9 +138,62 @@ struct SettingsView: View {
     }
 }
 
+private struct LanguageSettingsView: View {
+    @Binding var selectedLanguageRaw: String
+
+    var body: some View {
+        ZStack {
+            Theme.Colors.bg.ignoresSafeArea()
+
+            VStack(alignment: .leading, spacing: Theme.Space.md) {
+                Text("选择后会立即应用到支持多语言的页面。")
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Colors.ink2)
+                    .padding(.horizontal, Theme.Space.lg)
+
+                VStack(spacing: 0) {
+                    ForEach(AppLanguage.allCases) { language in
+                        Button {
+                            selectedLanguageRaw = language.rawValue
+                        } label: {
+                            HStack(spacing: Theme.Space.md) {
+                                Text(language.nativeName)
+                                    .font(Theme.Font.subhead)
+                                    .foregroundStyle(Theme.Colors.ink)
+                                Spacer()
+                                if selectedLanguageRaw == language.rawValue {
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundStyle(Theme.Colors.accent)
+                                }
+                            }
+                            .padding(Theme.Space.md)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+
+                        if language != AppLanguage.allCases.last {
+                            Divider().padding(.leading, Theme.Space.md)
+                        }
+                    }
+                }
+                .background(Theme.Colors.surface)
+                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.field))
+                .shadowSoft()
+                .padding(.horizontal, Theme.Space.lg)
+
+                Spacer()
+            }
+            .padding(.vertical, Theme.Space.md)
+        }
+        .navigationTitle("语言")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
 private struct LegalTextView: View {
-    let title: String
-    let content: String
+    let title: LocalizedStringKey
+    let content: LocalizedStringKey
 
     var body: some View {
         ZStack {
