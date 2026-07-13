@@ -165,3 +165,25 @@
 - 先验收并合并 #12，让路线文档进入 `main`。
 - #13、#14、#15 互相独立，均可单独验收。
 - #11 是分享模板大 PR，建议单独看视觉效果后再合并。
+
+## 13. 追加变更记录：设置页调试付费状态
+
+任务目标：
+
+- 在 PR #12 分支追加一个开发者调试入口，允许本地快速切换 `isPro` 免费 / 已订阅状态，用于对比分享导出、水印和付费入口表现。
+
+影响文件：
+
+- `FishingDiary/Services/PurchaseService.swift`：复用现有 Mock 购买服务，新增调试写入方法。
+- `FishingDiary/Views/Profile/SettingsView.swift`：在设置页新增 `DEBUG` 环境下可见的开发者调试区。
+
+范围边界：
+
+- 不接入 StoreKit 2。
+- 不修改 SwiftData schema、entitlements、CI/CD 或生产签名配置。
+- 不在 Release UI 暴露开发者开关。
+
+验证计划：
+
+- `git diff --check`
+- `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project FishingDiary.xcodeproj -scheme FishingDiary -configuration Debug -destination 'generic/platform=iOS Simulator' build`
