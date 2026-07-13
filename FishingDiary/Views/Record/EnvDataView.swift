@@ -10,6 +10,7 @@ struct EnvDataView: View {
     @State private var navigateToSaved = false
     @State private var locating = false
     @State private var locator = OneShotLocation()
+    @State private var envStatusMessage = "使用本地环境预设，可按当天实际情况修改。"
 
     // 枚举选项
     private let windDirections = ["北", "东北", "东", "东南", "南", "西南", "西", "西北"]
@@ -52,6 +53,11 @@ struct EnvDataView: View {
             Text("正在感应环境数据…")
                 .font(Theme.Font.body)
                 .foregroundStyle(Theme.Colors.ink2)
+            Text("当前阶段不依赖 WeatherKit，先载入可编辑的本地预设。")
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Colors.ink3)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, Theme.Space.xl)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -60,20 +66,7 @@ struct EnvDataView: View {
     private var dataScrollView: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Space.md) {
-                // 提示 chip
-                HStack(spacing: 6) {
-                    Image(systemName: "pencil.circle.fill")
-                        .font(.caption)
-                    Text("已带入当前数据，可直接编辑或关掉不想记录的项 ↓")
-                        .font(Theme.Font.caption)
-                }
-                .foregroundStyle(Theme.Colors.accent)
-                .padding(.horizontal, Theme.Space.md)
-                .padding(.vertical, Theme.Space.sm)
-                .background(Theme.Colors.accentSoft)
-                .clipShape(Capsule())
-                .padding(.horizontal, Theme.Space.lg)
-                .padding(.top, Theme.Space.md)
+                statusChip
 
                 // 可编辑数据列表
                 VStack(spacing: 0) {
@@ -106,6 +99,24 @@ struct EnvDataView: View {
 
     private var divider: some View {
         Divider().padding(.leading, Theme.Space.lg)
+    }
+
+    private var statusChip: some View {
+        HStack(alignment: .top, spacing: 6) {
+            Image(systemName: locating ? "location.circle.fill" : "pencil.circle.fill")
+                .font(.caption)
+            Text(envStatusMessage)
+                .font(Theme.Font.caption)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .foregroundStyle(Theme.Colors.accent)
+        .padding(.horizontal, Theme.Space.md)
+        .padding(.vertical, Theme.Space.sm)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.accentSoft)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.field))
+        .padding(.horizontal, Theme.Space.lg)
+        .padding(.top, Theme.Space.md)
     }
 
     // MARK: - 定位行
@@ -308,10 +319,12 @@ struct EnvDataView: View {
     // MARK: - 实时定位
     private func locateNow() {
         locating = true
+        envStatusMessage = "正在获取当前位置；失败也可以手动填写钓点。"
         locator.fetch { loc in
             DispatchQueue.main.async {
                 guard let loc = loc else {
                     locating = false
+                    envStatusMessage = "定位失败，已保留本地预设。你仍然可以手动填写钓点和环境数据。"
                     return
                 }
                 recordSession.latitude = loc.coordinate.latitude
@@ -323,6 +336,7 @@ struct EnvDataView: View {
                         if !name.isEmpty { recordSession.locationName = name }
                     }
                     locating = false
+                    envStatusMessage = "已更新钓点定位；天气、潮汐和月相仍是可编辑的本地记录值。"
                 }
             }
         }
@@ -342,6 +356,7 @@ struct EnvDataView: View {
             recordSession.latitude = mockLocation.coordinate.latitude
             recordSession.longitude = mockLocation.coordinate.longitude
         }
+        envStatusMessage = "已载入本地环境预设，可直接编辑或关闭不想记录的项。"
         isLoading = false
     }
 }
