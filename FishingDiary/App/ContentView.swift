@@ -113,7 +113,7 @@ private struct FloatingTabBar: View {
         .padding(.bottom, 8)
     }
 
-    private func tabItem(icon: String, label: String, tag: Int) -> some View {
+    private func tabItem(icon: String, label: LocalizedStringKey, tag: Int) -> some View {
         Button {
             selectedTab = tag
         } label: {
