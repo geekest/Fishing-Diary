@@ -36,9 +36,12 @@ struct ShareStyleView: View {
         case tech    = "户外科技风"
         case sticker = "抠图贴纸墙"
         case film    = "胶片复古"
+        case magazine = "钓场杂志"
+        case poster   = "战报海报"
+        case specimen = "标本档案"
         var id: String { rawValue }
-        var isFree: Bool { self == .minimal }
-        var badge: String { isFree ? "FREE" : "PRO" }
+        var isFree: Bool { true }
+        var badge: String { self == .minimal ? "FREE" : "已解锁" }
     }
 
     var body: some View {
@@ -107,8 +110,12 @@ struct ShareStyleView: View {
     }
 
     private var livePreviewCard: some View {
-        MinimalCardView(session: session, visibleElements: ShareElementsConfig(), showWatermark: false, ratio: selectedRatio.aspectRatio)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+        ShareCardPreview(
+            session: session,
+            config: ShareElementsConfig(),
+            style: selectedStyle,
+            ratio: selectedRatio
+        )
             .shadowCard()
     }
 
@@ -174,15 +181,14 @@ struct ShareStyleView: View {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Space.md) {
                 ForEach(CardStyle.allCases) { style in
                     Button {
-                        if style.isFree {
-                            withAnimation(.easeInOut(duration: 0.28)) { selectedStyle = style }
-                        }
+                        withAnimation(.easeInOut(duration: 0.28)) { selectedStyle = style }
                     } label: {
                         VStack(spacing: 0) {
                             // 缩略图
                             ZStack(alignment: .topTrailing) {
                                 styleThumbnail(for: style)
-                                    .frame(height: 110)
+                                    .aspectRatio(selectedRatio.aspectRatio, contentMode: .fit)
+                                    .frame(maxWidth: .infinity)
                                     .clipShape(RoundedRectangle(cornerRadius: 10))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 10)
@@ -199,15 +205,6 @@ struct ShareStyleView: View {
                                     .clipShape(Capsule())
                                     .padding(7)
 
-                                // PRO 锁图标
-                                if !style.isFree {
-                                    Image(systemName: "lock.fill")
-                                        .font(.system(size: 16))
-                                        .foregroundStyle(.white.opacity(0.8))
-                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                        .background(.black.opacity(0.35))
-                                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                                }
                             }
 
                             Text(style.rawValue)
@@ -217,9 +214,7 @@ struct ShareStyleView: View {
                                 .padding(.top, Theme.Space.sm)
                                 .padding(.bottom, Theme.Space.xs)
                         }
-                        .opacity(style.isFree ? 1 : 0.6)
                     }
-                    .disabled(!style.isFree)
                     .buttonStyle(.plain)
                 }
             }
@@ -230,31 +225,24 @@ struct ShareStyleView: View {
     private func styleThumbnail(for style: CardStyle) -> some View {
         switch style {
         case .minimal:
-            MinimalCardView(session: session, visibleElements: ShareElementsConfig(), showWatermark: false)
+            ShareCardPreview(
+                session: session,
+                config: ShareElementsConfig(),
+                style: style,
+                ratio: selectedRatio
+            )
         case .tech:
-            ZStack(alignment: .bottomLeading) {
-                LinearGradient(colors: [Color(hex: "0A0F1C"), Color(hex: "1A3050")],
-                               startPoint: .topLeading, endPoint: .bottomTrailing)
-                LinearGradient(colors: [.clear, .black.opacity(0.5)], startPoint: .center, endPoint: .bottom)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("FISHING DATA").font(Theme.Font.microLabel).foregroundStyle(Color(hex: "00E5FF").opacity(0.8))
-                }
-                .padding(10)
-            }
+            ShareCardPreview(session: session, config: ShareElementsConfig(), style: style, ratio: selectedRatio)
         case .sticker:
-            ZStack(alignment: .bottomLeading) {
-                Color(hex: "EDE5CE")
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("今日战果").font(.system(size: 12)).foregroundStyle(Color(hex: "3C3422"))
-                    Image(systemName: "fish.fill").font(.system(size: 30)).foregroundStyle(Theme.Colors.accent.opacity(0.7)).offset(x: -8, y: 4)
-                }
-                .padding(10)
-            }
+            ShareCardPreview(session: session, config: ShareElementsConfig(), style: style, ratio: selectedRatio)
         case .film:
-            ZStack {
-                Color(hex: "D4C9A8")
-                RoundedRectangle(cornerRadius: 2).stroke(.white, lineWidth: 5).padding(6)
-            }
+            ShareCardPreview(session: session, config: ShareElementsConfig(), style: style, ratio: selectedRatio)
+        case .magazine:
+            ShareCardPreview(session: session, config: ShareElementsConfig(), style: style, ratio: selectedRatio)
+        case .poster:
+            ShareCardPreview(session: session, config: ShareElementsConfig(), style: style, ratio: selectedRatio)
+        case .specimen:
+            ShareCardPreview(session: session, config: ShareElementsConfig(), style: style, ratio: selectedRatio)
         }
     }
 }
@@ -265,4 +253,26 @@ struct ShareStyleView: View {
                        isRecordPresented: .constant(true))
     }
     .modelContainer(for: [FishingSession.self, FishCatch.self], inMemory: true)
+}
+
+/// 分享卡预览图：直接复用出图模板，让小预览和正式导出共享同一套比例排版。
+struct ShareCardPreview: View {
+    let session: FishingSession
+    let config: ShareElementsConfig
+    let style: ShareStyleView.CardStyle
+    let ratio: ShareStyleView.CardRatio
+    var showWatermark: Bool = false
+    var cornerRadius: CGFloat = 10
+
+    var body: some View {
+        MinimalCardView(
+            session: session,
+            visibleElements: config,
+            showWatermark: showWatermark,
+            style: style,
+            ratio: ratio.aspectRatio
+        )
+        .aspectRatio(ratio.aspectRatio, contentMode: .fit)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+    }
 }

@@ -47,6 +47,8 @@ class PurchaseService: ObservableObject {
 
     init() {
         self.isPurchased = UserDefaults.standard.bool(forKey: Self.isProKey)
+        self.isPurchased = true
+        UserDefaults.standard.set(true, forKey: "isPro")
         // TODO: 启动时调用 checkEntitlements()
     }
 
