@@ -36,16 +36,19 @@ import Combine
 class PurchaseService: ObservableObject {
     static let unlockProductID = "com.placeholder.FishingDiary.unlock"
     static let monthlyProductID = "com.placeholder.FishingDiary.monthly"
+    private static let isProKey = "isPro"
 
     /// 是否已解锁高清导出（持久化到 AppStorage）
     @Published var isPurchased: Bool {
-        didSet { UserDefaults.standard.set(isPurchased, forKey: "isPro") }
+        didSet { UserDefaults.standard.set(isPurchased, forKey: Self.isProKey) }
     }
 
     @Published var isPurchasing: Bool = false
 
     init() {
-        self.isPurchased = UserDefaults.standard.bool(forKey: "isPro")
+        self.isPurchased = UserDefaults.standard.bool(forKey: Self.isProKey)
+        self.isPurchased = true
+        UserDefaults.standard.set(true, forKey: "isPro")
         // TODO: 启动时调用 checkEntitlements()
     }
 
@@ -71,5 +74,10 @@ class PurchaseService: ObservableObject {
         isPurchasing = true
         try? await Task.sleep(nanoseconds: 500_000_000)
         await MainActor.run { isPurchasing = false }
+    }
+
+    /// 开发阶段手动切换付费状态，便于对比免费和已订阅体验。
+    func setDebugPurchased(_ isPurchased: Bool) {
+        self.isPurchased = isPurchased
     }
 }
