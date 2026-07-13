@@ -4,11 +4,12 @@ import SwiftUI
 struct PreviewExportView: View {
     let session: FishingSession
     let config: ShareElementsConfig
+    let style: ShareStyleView.CardStyle
     let ratio: ShareStyleView.CardRatio
     @Binding var isRecordPresented: Bool
 
     @EnvironmentObject var purchaseService: PurchaseService
-    @State private var showPaywall = true
+    @State private var showPaywall = false
     @State private var showShareSheet = false
     @State private var renderedImage: UIImage? = nil
     @State private var showSaveToast = false
@@ -19,14 +20,19 @@ struct PreviewExportView: View {
 
     var body: some View {
         ZStack {
-            // 全屏卡片预览
-            MinimalCardView(
+            Theme.Colors.bg.ignoresSafeArea()
+
+            // 按最终导出图片等比预览，不再拉伸铺满屏幕。
+            ShareCardPreview(
                 session: session,
-                visibleElements: config,
+                config: config,
+                style: style,
+                ratio: ratio,
                 showWatermark: !purchaseService.isPurchased,
-                ratio: ratio.aspectRatio
+                cornerRadius: 0
             )
-            .ignoresSafeArea()
+            .padding(.horizontal, Theme.Space.lg)
+            .padding(.vertical, Theme.Space.md)
 
             // 顶部导航覆盖
             VStack {
@@ -223,7 +229,12 @@ struct PreviewExportView: View {
     // MARK: - 导出
     private func exportImage() {
         Task { @MainActor in
-            let img = ImageRenderService.renderCard(session: session, visibleElements: config, ratio: ImageRenderService.CardRatio(ratio))
+            let img = ImageRenderService.renderCard(
+                session: session,
+                visibleElements: config,
+                style: style,
+                ratio: ImageRenderService.CardRatio(ratio)
+            )
             renderedImage = img
             ImageRenderService.saveToPhotoLibrary(img) { success in
                 saveToastMessage = success ? "高清图已存入相册 ✓" : "保存失败，请检查相册权限"
@@ -253,6 +264,7 @@ struct ShareSheet: UIViewControllerRepresentable {
         PreviewExportView(
             session: FishingSession(date: .now, locationName: "千岛湖"),
             config: ShareElementsConfig(),
+            style: .minimal,
             ratio: .threeByFour,
             isRecordPresented: .constant(true)
         )
