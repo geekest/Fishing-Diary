@@ -72,41 +72,54 @@ struct SettingsView: View {
     private var developerSection: some View {
         settingsCard(title: "开发者调试") {
             VStack(alignment: .leading, spacing: Theme.Space.md) {
-                HStack(spacing: Theme.Space.sm) {
-                    Image(systemName: purchaseService.isPurchased ? "checkmark.seal.fill" : "lock.open")
-                        .font(.system(size: 16))
-                        .foregroundStyle(purchaseService.isPurchased ? Theme.Colors.accent : Theme.Colors.gold)
-                    Text(purchaseService.isPurchased ? "当前为已订阅状态" : "当前为免费无订阅状态")
-                        .font(Theme.Font.subhead)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Theme.Colors.ink)
-                    Spacer()
-                }
+                debugSubscriptionToggle
 
-                Button {
-                    purchaseService.setDebugPurchased(!purchaseService.isPurchased)
-                } label: {
-                    HStack {
-                        Text(purchaseService.isPurchased ? "切换为免费模式" : "切换为已订阅模式")
-                            .font(Theme.Font.subhead)
-                            .fontWeight(.semibold)
-                        Spacer()
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 15, weight: .semibold))
-                    }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, Theme.Space.md)
-                    .padding(.vertical, 12)
-                    .background(purchaseService.isPurchased ? Theme.Colors.ink : Theme.Colors.accent)
-                    .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.field))
-                }
-                .buttonStyle(ScaleButtonStyle())
-
-                Text("仅用于本地开发对比水印、导出与付费入口表现。")
+                Text("仅用于本地开发对比水印、导出与付费入口表现，Release 构建不会展示。")
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Colors.ink3)
             }
         }
+    }
+
+    private var debugSubscriptionToggle: some View {
+        Button {
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                purchaseService.setDebugPurchased(!purchaseService.isPurchased)
+            }
+        } label: {
+            GeometryReader { proxy in
+                ZStack(alignment: purchaseService.isPurchased ? .trailing : .leading) {
+                    Capsule()
+                        .fill(Theme.Colors.bg2)
+
+                    Capsule()
+                        .fill(purchaseService.isPurchased ? Theme.Colors.accent : Theme.Colors.gold)
+                        .padding(4)
+                        .frame(width: proxy.size.width / 2)
+
+                    HStack(spacing: 0) {
+                        debugToggleLabel(title: "免费", isSelected: !purchaseService.isPurchased)
+                        debugToggleLabel(title: "已订阅", isSelected: purchaseService.isPurchased)
+                    }
+                }
+                .overlay {
+                    Capsule()
+                        .stroke(Theme.Colors.ink.opacity(0.08), lineWidth: 1)
+                }
+            }
+            .frame(height: 44)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("开发者付费状态")
+        .accessibilityValue(purchaseService.isPurchased ? "已订阅" : "免费")
+    }
+
+    private func debugToggleLabel(title: String, isSelected: Bool) -> some View {
+        Text(title)
+            .font(Theme.Font.subhead)
+            .fontWeight(.semibold)
+            .foregroundStyle(isSelected ? .white : Theme.Colors.ink2)
+            .frame(maxWidth: .infinity)
     }
 
     private var legalSection: some View {
